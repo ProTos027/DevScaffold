@@ -27,7 +27,6 @@ The pipeline consists of specialized Gemini agents:
 - **Backend**: Python 3.12+, Django, Django REST Framework, PostgreSQL.
 - **Frontend**: React, Vite, CSS Modules.
 - **AI Engine**: Google Gemini (v1.5/2.0/2.5) via Google GenAI SDK.
-- **Infrastructure**: Redis, Celery (Roadmap).
 
 ## 🚀 Getting Started
 
