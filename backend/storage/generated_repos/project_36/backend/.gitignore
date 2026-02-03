@@ -1,0 +1,40 @@
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/build/
+!**/src/main/**/target/
+!**/src/test/**/build/
+!**/src/test/**/target/
+
+### Maven ###
+*.class
+*.log
+
+# Package Files
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# IDE specific files
+.idea/
+.project
+.settings/
+.classpath
+*.iws
+*.iml
+*.ipr
+
+# OS generated files
+.DS_Store
+thumbs.db
+
+# Log files
+*.log
+log/
+logs/
+
+# Temp files
+*.tmp
+*~

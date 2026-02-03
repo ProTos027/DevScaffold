@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Space-themed global styles */
+@layer base {
+  body {
+    @apply font-sans antialiased;
+    @apply transition-colors duration-300;
+  }
+
+  /* Dark mode background */
+  .dark body {
+    @apply bg-gradient-space text-white;
+  }
+
+  /* Light mode background */
+  body {
+    @apply bg-gradient-light text-gray-900;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-space-900 dark:bg-space-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-cosmic-cyan rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-cosmic-purple;
+  }
+}
+
+@layer components {
+
+  /* Glass card effect */
+  .glass-card {
+    @apply bg-white/10 dark:bg-white/5 backdrop-blur-lg rounded-2xl;
+    @apply border border-white/20 dark:border-white/10;
+    @apply shadow-glass;
+  }
+
+  /* Neon button */
+  .neon-button {
+    @apply px-6 py-3 rounded-lg font-medium;
+    @apply bg-gradient-to-r from-cosmic-cyan to-cosmic-purple;
+    @apply text-white shadow-glow-cyan;
+    @apply hover:shadow-glow-purple transition-all duration-300;
+    @apply hover:scale-105;
+  }
+
+  /* Input field */
+  .input-field {
+    @apply px-4 py-3 rounded-lg;
+    @apply bg-white/10 dark:bg-white/5 backdrop-blur-sm;
+    @apply border border-white/20 dark:border-white/10;
+    @apply text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400;
+    @apply focus:outline-none focus:ring-2 focus:ring-cosmic-cyan;
+    @apply transition-all duration-200;
+  }
+
+  /*Animated stars background */
+  .stars-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .stars-background::before {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    box-shadow:
+      100px 200px white,
+      200px 400px white,
+      300px 100px white,
+      400px 300px white,
+      500px 150px white,
+      600px 350px white,
+      700px 250px white,
+      800px 450px white;
+    animation: twinkle 3s infinite;
+  }
+
+  @keyframes twinkle {
+
+    0%,
+    100% {
+      opacity: 0.3;
+    }
+
+    50% {
+      opacity: 1;
+    }
+  }
+}

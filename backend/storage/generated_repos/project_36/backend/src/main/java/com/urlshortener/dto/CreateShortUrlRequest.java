@@ -1,0 +1,1 @@
+package com.urlshortener.dto;import jakarta.validation.constraints.NotBlank;import org.hibernate.validator.constraints.URL;public class CreateShortUrlRequest {@NotBlank(message = "Long URL cannot be blank")@URL(message = "Invalid URL format")private String longUrl;public String getLongUrl() {return longUrl;}public void setLongUrl(String longUrl) {this.longUrl = longUrl;}}

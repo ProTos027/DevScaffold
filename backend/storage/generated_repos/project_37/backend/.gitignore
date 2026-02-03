@@ -1,0 +1,41 @@
+# Maven
+/target/
+.mvn/
+
+# IDEs
+.idea/
+.project
+.classpath
+.settings/
+*.iml
+*.ipr
+*.iws
+
+# Build artifacts
+*.jar
+*.war
+*.ear
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# OS-specific
+.DS_Store
+thumbs.db
+
+# Spring Boot specific
+/src/main/resources/application*.properties
+/src/main/resources/application*.yml
+!/src/main/resources/application.properties
+!/src/main/resources/application.yml
+
+# Environment variables
+.env
+.env.*
+
+# Others
+*.bak
+*.swp
+*~
