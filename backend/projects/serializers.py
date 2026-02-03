@@ -47,7 +47,7 @@ class ProjectListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Project
-        fields = ('id', 'name', 'prompt', 'status', 'progress', 'created_at', 'completed_at')
+        fields = ('id', 'name', 'prompt', 'status', 'progress', 'gemini_model', 'created_at', 'completed_at')
         read_only_fields = ('id', 'status', 'progress', 'created_at', 'completed_at')
 
 

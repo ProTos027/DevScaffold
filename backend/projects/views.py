@@ -107,6 +107,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
             'progress': project.progress,
             'error_message': project.error_message
         })
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        """
+        POST /api/projects/{id}/cancel/
+        Cancel a running pipeline.
+        """
+        project = self.get_object()
+        if project.status in ['completed', 'failed']:
+            return Response(
+                {'detail': f'Cannot cancel project in status: {project.status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        project.mark_failed("Cancelled by user")
+        return Response({'status': 'cancelled'})
     
     @action(detail=True, methods=['get'])
     def download(self, request, pk=None):

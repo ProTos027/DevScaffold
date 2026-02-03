@@ -11,7 +11,7 @@ export default function DashboardPage() {
     const [showAPIKeysModal, setShowAPIKeysModal] = useState(false);
     const [prompt, setPrompt] = useState('');
     const [projectName, setProjectName] = useState('');
-    const [geminiModel, setGeminiModel] = useState('gemini-1.5-flash');
+    const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash');
     const [geminiApiKeyId, setGeminiApiKeyId] = useState(''); // Selected API key ID
     const [geminiKeys, setGeminiKeys] = useState([]); // Available Gemini keys
     const [hasKeys, setHasKeys] = useState({ gemini: false });
@@ -27,8 +27,14 @@ export default function DashboardPage() {
 
     useEffect(() => {
         fetchProjects();
-        checkAPIKeys();
         checkGeminiKeys();
+
+        // Polling for projects in dashboard too
+        const interval = setInterval(() => {
+            fetchProjects();
+        }, 5000); // Less frequent than detailed page
+
+        return () => clearInterval(interval);
     }, []);
 
     const checkGeminiKeys = async () => {
@@ -60,22 +66,11 @@ export default function DashboardPage() {
         }
     };
 
-    const checkAPIKeys = async () => {
-        try {
-            const { data } = await authAPI.checkKeys();
-            setHasKeys(data);
-        } catch (error) {
-            console.error('Failed to check API keys:', error);
-        }
-    };
-
     const handleCreateProject = async (e) => {
         e.preventDefault();
 
-        // Check if user has any Gemini API keys
         if (!hasKeys.gemini) {
             alert('Please configure at least one Google Gemini API key first');
-            // Load keys and show modal
             setShowAPIKeysModal(true);
             setShowNewProjectModal(false);
             try {
@@ -88,39 +83,41 @@ export default function DashboardPage() {
             return;
         }
 
-
-
         try {
             const response = await projectsAPI.create(prompt, geminiModel, projectName, geminiApiKeyId);
-            console.log('Project creation response:', response);
-
             if (response && response.data) {
-                console.log('Project created successfully:', response.data);
-
-                // Navigate to project page
                 navigate(`/project/${response.data.id}`);
             } else {
-                console.error('Unexpected response format:', response);
                 alert('Project creation returned unexpected response format');
             }
         } catch (error) {
-            console.error('Project creation error:', error);
-            alert('Failed to create project: ' + (error.response?.data?.detail || error.response?.data?.gemini_model?.[0] || error.message));
+            alert('Failed to create project: ' + (error.response?.data?.detail || error.message));
         } finally {
             setLoading(false);
         }
     };
 
-    const handleUpdateAPIKeys = async (e) => {
-        e.preventDefault();
-        try {
-            await authAPI.updateAPIKeys(apiKeys.openai, apiKeys.anthropic);
-            alert('API keys updated successfully');
-            setShowAPIKeysModal(false);
-            await checkAPIKeys();
-        } catch (error) {
-            alert('Failed to update API keys');
+    const handleRetry = (project) => {
+        setPrompt(project.prompt);
+        setProjectName(project.name ? `${project.name} (Retry)` : '');
+        setGeminiModel(project.gemini_model || 'gemini-2.5-flash');
+        setShowNewProjectModal(true);
+    };
+
+    const handleTerminate = async (e, projectId) => {
+        e.stopPropagation();
+        if (confirm('Are you sure you want to terminate this generation?')) {
+            try {
+                await projectsAPI.cancel(projectId);
+                fetchProjects();
+            } catch (error) {
+                alert('Failed to terminate: ' + (error.response?.data?.detail || error.message));
+            }
         }
+    };
+
+    const handleUpdateAPIKeys = async (e) => {
+        alert('This feature is deprecated. Use New API Keys management.');
     };
 
     return (
@@ -161,7 +158,12 @@ export default function DashboardPage() {
                 <div className="mb-6 flex justify-between items-center">
                     <h2 className="text-2xl font-bold">Your Projects</h2>
                     <button
-                        onClick={() => setShowNewProjectModal(true)}
+                        onClick={() => {
+                            setPrompt('');
+                            setProjectName('');
+                            setGeminiModel('gemini-2.5-flash');
+                            setShowNewProjectModal(true);
+                        }}
                         className="neon-button"
                     >
                         + New Project
@@ -193,9 +195,34 @@ export default function DashboardPage() {
                                             project.status === 'failed' ? 'bg-red-500/20 text-red-300' :
                                                 'bg-cosmic-cyan/20 text-cosmic-cyan'
                                             }`}>
-                                            {project.status}
+                                            {project.status === 'failed' && project.error_message?.includes('Cancelled') ? 'cancelled' : project.status}
                                         </span>
                                         <span className="text-gray-500">{project.progress}%</span>
+                                    </div>
+
+                                    {/* Action Buttons Overlay/Footer */}
+                                    <div className="mt-4 flex gap-2">
+                                        {project.status === 'failed' && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleRetry(project);
+                                                }}
+                                                className="flex-1 px-3 py-1.5 rounded bg-cosmic-cyan/20 hover:bg-cosmic-cyan/40 text-cosmic-cyan text-sm transition-colors border border-cosmic-cyan/30"
+                                                title="Retry with same inputs"
+                                            >
+                                                🔄 Retry
+                                            </button>
+                                        )}
+                                        {project.status !== 'completed' && project.status !== 'failed' && (
+                                            <button
+                                                onClick={(e) => handleTerminate(e, project.id)}
+                                                className="flex-1 px-3 py-1.5 rounded bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300 text-sm transition-colors border border-yellow-500/30"
+                                                title="Terminate build"
+                                            >
+                                                🛑 Stop
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                                 <button
