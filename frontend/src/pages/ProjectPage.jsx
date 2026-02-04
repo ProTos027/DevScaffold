@@ -97,28 +97,137 @@ export default function ProjectPage() {
                             project.status === 'failed' ? 'bg-red-500/20 text-red-300' :
                                 'bg-cosmic-cyan/20 text-cosmic-cyan animate-pulse'
                             }`}>
-                            {project.status}
+                            {project.status === 'failed' && project.error_message?.includes('Cancelled') ? 'cancelled' : project.status}
                         </div>
+                        {project.status !== 'completed' && project.status !== 'failed' && (
+                            <button
+                                onClick={async () => {
+                                    if (confirm('Terminate this project generation?')) {
+                                        try {
+                                            await projectsAPI.cancel(id);
+                                            fetchProject();
+                                        } catch (error) {
+                                            alert('Failed to terminate: ' + (error.response?.data?.detail || error.message));
+                                        }
+                                    }
+                                }}
+                                className="block w-full mt-2 px-4 py-2 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 transition-colors border border-yellow-500/30 text-sm font-bold flex items-center justify-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <rect x="9" y="9" width="6" height="6" strokeWidth="2" />
+                                </svg> Terminate Build
+                            </button>
+                        )}
                         {project.status === 'completed' && (
-                            <button onClick={handleDownload} className="neon-button block w-full mt-2">
-                                📦 Download ZIP
+                            <button onClick={handleDownload} className="neon-button block w-full mt-2 flex items-center justify-center gap-2">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg> Download ZIP
+                            </button>
+                        )}
+                        {(project.status === 'failed' || (project.status === 'failed' && project.error_message?.includes('Cancelled'))) && (
+                            <button
+                                onClick={() => {
+                                    navigate('/dashboard', {
+                                        state: { retryProject: project }
+                                    });
+                                }}
+                                className="block w-full mt-2 px-4 py-2 rounded-lg bg-cosmic-cyan/20 hover:bg-cosmic-cyan/30 text-cosmic-cyan transition-colors border border-cosmic-cyan/30 text-sm font-bold flex items-center justify-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg> Retry Generation
                             </button>
                         )}
                     </div>
                 </div>
 
-                {/* Progress Bar */}
-                {project.status !== 'completed' && project.status !== 'failed' && (
-                    <div className="mt-6">
-                        <div className="flex justify-between text-sm mb-2">
-                            <span>{project.current_stage}</span>
-                            <span>{project.progress}%</span>
-                        </div>
-                        <div className="w-full bg-white/10 rounded-full h-3 overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-cosmic-cyan to-cosmic-purple transition-all duration-500"
-                                style={{ width: `${project.progress}%` }}
-                            />
+                {/* Pipeline Stepper */}
+                {project.status !== 'failed' && (
+                    <div className="mt-10 overflow-x-auto pb-4 custom-scrollbar">
+                        <div className="flex items-center justify-between min-w-[700px] px-4">
+                            {[
+                                {
+                                    id: 'spec', label: 'Specification',
+                                    icon: (
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    ),
+                                    stages: ['spec_building', 'validating']
+                                },
+                                {
+                                    id: 'planning', label: 'Architecture',
+                                    icon: (
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
+                                        </svg>
+                                    ),
+                                    stages: ['planning', 'graph_building']
+                                },
+                                {
+                                    id: 'contract', label: 'Folder Contracts',
+                                    icon: (
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
+                                    ),
+                                    stages: ['folder_contracts']
+                                },
+                                {
+                                    id: 'code', label: 'Implementation',
+                                    icon: (
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                        </svg>
+                                    ),
+                                    stages: ['code_generation']
+                                },
+                                {
+                                    id: 'finish', label: 'Finalization',
+                                    icon: (
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    ),
+                                    stages: ['assembling', 'completed']
+                                }
+                            ].map((step, index, array) => {
+                                const isCompleted = project.status === 'completed' ||
+                                    array.slice(index + 1).some(s => s.stages.includes(project.status));
+                                const isActive = step.stages.includes(project.status);
+                                const isFuture = !isCompleted && !isActive;
+
+                                return (
+                                    <React.Fragment key={step.id}>
+                                        <div className="flex flex-col items-center gap-3 relative z-10">
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all duration-500 border-2 ${isCompleted ? 'bg-cosmic-cyan/20 border-cosmic-cyan text-cosmic-cyan' :
+                                                isActive ? 'bg-cosmic-cyan border-white/20 text-space-900 animate-pulse' :
+                                                    'bg-white/5 border-white/10 text-gray-600'
+                                                }`}>
+                                                {isCompleted ? (
+                                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                ) : step.icon}
+                                            </div>
+                                            <div className={`text-xs font-bold uppercase tracking-tighter transition-colors duration-500 whitespace-nowrap ${isCompleted ? 'text-cosmic-cyan' : isActive ? 'text-white' : 'text-gray-600'
+                                                }`}>
+                                                {step.label}
+                                            </div>
+                                        </div>
+                                        {index < array.length - 1 && (
+                                            <div className="flex-1 h-[2px] mx-4 -mt-8 relative overflow-hidden bg-black/10 dark:bg-white/5">
+                                                <div
+                                                    className="absolute inset-0 bg-cosmic-cyan transition-all duration-1000 origin-left"
+                                                    style={{ transform: isCompleted ? 'scaleX(1)' : 'scaleX(0)' }}
+                                                />
+                                            </div>
+                                        )}
+                                    </React.Fragment>
+                                );
+                            })}
                         </div>
                     </div>
                 )}
@@ -126,7 +235,7 @@ export default function ProjectPage() {
 
             {/* Tabs */}
             <div className="glass-card mb-6">
-                <div className="flex border-b border-white/10">
+                <div className="flex border-b border-black/10 dark:border-white/10">
                     {['status', 'intent-spec', 'components'].map((tab) => (
                         <button
                             key={tab}
