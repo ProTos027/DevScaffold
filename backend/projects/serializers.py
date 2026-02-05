@@ -58,16 +58,22 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     component_plan = ComponentPlanSerializer(read_only=True)
     dependency_graph = DependencyGraphSerializer(read_only=True)
     validation_errors = ValidationErrorSerializer(many=True, read_only=True)
+    api_key_name = serializers.SerializerMethodField()
     
     class Meta:
         model = Project
-        fields = ('id', 'name', 'prompt', 'model_provider', 'status', 'current_stage',
+        fields = ('id', 'name', 'prompt', 'model_provider', 'gemini_model', 'status', 'current_stage',
                  'progress', 'error_message', 'zip_file_path', 'created_at', 'updated_at',
                  'completed_at', 'deletion_scheduled_at', 'intent_spec', 'component_plan',
-                 'dependency_graph', 'validation_errors')
+                 'dependency_graph', 'validation_errors', 'api_key_name')
         read_only_fields = ('id', 'status', 'current_stage', 'progress', 'error_message',
                            'zip_file_path', 'created_at', 'updated_at', 'completed_at',
-                           'deletion_scheduled_at')
+                           'deletion_scheduled_at', 'gemini_model', 'api_key_name')
+
+    def get_api_key_name(self, obj):
+        if obj.gemini_api_key:
+            return obj.gemini_api_key.name
+        return "System Default"
 
 
 class ProjectCreateSerializer(serializers.ModelSerializer):
@@ -85,14 +91,12 @@ class ProjectCreateSerializer(serializers.ModelSerializer):
         api_key = validated_data.pop('_api_key')
         validated_data.pop('gemini_api_key_id', None) # Pop write-only field not on model
         
-        # Create project (user comes from validated_data via view's save(user=...))
+        # Create project with persistent API key link
+        # 'user' is already in validated_data because of ViewSet's perform_create behavior
         project = Project.objects.create(
+            gemini_api_key=api_key,
             **validated_data
         )
-        
-        # Store the API key in the project temporarily for orchestrator
-        # This will be picked up by the orchestrator triggered in views.py
-        project._selected_api_key = api_key.get_api_key()
         
         return project
     

@@ -59,6 +59,16 @@ class IntentSpecSchema(BaseModel):
         default_factory=dict,
         description="Additional constraints like auth_method (jwt|session|null)"
     )
+    
+    vague_intent: bool = Field(
+        default=False,
+        description="True if the user prompt was too vague and the system had to make significant assumptions"
+    )
+    
+    explanation: str = Field(
+        default="",
+        description="Short explanation of why the prompt was considered vague and what assumptions were made"
+    )
 
 
 class Component(BaseModel):

@@ -48,8 +48,8 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-class APIKeySerializer(serializers.Serializer):
-    """Serializer for storing API keys."""
+class LegacyAPIKeySerializer(serializers.Serializer):
+    """Legacy serializer for storing API keys (OpenAI, Anthropic)."""
     
     openai_api_key = serializers.CharField(required=False, allow_blank=True, write_only=True)
     anthropic_api_key = serializers.CharField(required=False, allow_blank=True, write_only=True)
@@ -87,3 +87,47 @@ class UserProfileSerializer(serializers.ModelSerializer):
     
     def get_has_github_token(self, obj):
         return bool(obj.github_access_token_encrypted)
+
+
+from .models import APIKey
+
+class APIKeySerializer(serializers.ModelSerializer):
+    """
+    Serializer for the APIKey model.
+    Handles encryption/decryption of keys and provides a safe preview.
+    """
+    api_key = serializers.CharField(write_only=True, required=False)
+    key_preview = serializers.SerializerMethodField()
+
+    class Meta:
+        model = APIKey
+        fields = ['id', 'provider', 'name', 'api_key', 'key_preview', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'key_preview', 'created_at', 'updated_at']
+
+    def get_key_preview(self, obj):
+        decrypted = obj.get_api_key()
+        if decrypted:
+            if len(decrypted) > 8:
+                return f"{decrypted[:4]}...{decrypted[-4:]}"
+            return "****"
+        return None
+
+    def create(self, validated_data):
+        api_key = validated_data.pop('api_key', None)
+        user = self.context['request'].user
+        instance = APIKey.objects.create(user=user, **validated_data)
+        if api_key:
+            instance.set_api_key(api_key)
+            instance.save()
+        return instance
+
+    def update(self, instance, validated_data):
+        api_key = validated_data.pop('api_key', None)
+        if api_key:
+            instance.set_api_key(api_key)
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        return instance

@@ -55,12 +55,16 @@ export const authAPI = {
 export const projectsAPI = {
     list: () => api.get('/projects/'),
     create: (prompt, geminiModel, name, geminiApiKeyId) =>
-        api.post('/projects/', { prompt, gemini_model: geminiModel, name, gemini_api_key: geminiApiKeyId }),
+        api.post('/projects/', { prompt, gemini_model: geminiModel, name, gemini_api_key_id: geminiApiKeyId }),
     get: (id) => api.get(`/projects/${id}/`),
     getStatus: (id) => api.get(`/projects/${id}/status/`),
     download: (id) => api.get(`/projects/${id}/download/`, { responseType: 'blob' }),
     cancel: (id) => api.post(`/projects/${id}/cancel/`),
     delete: (id) => api.delete(`/projects/${id}/`),
+    confirmSpec: (id) => api.post(`/projects/${id}/confirm_spec/`),
+    updateSpec: (id, spec) => api.put(`/projects/${id}/update_intent_spec/`, spec),
+    browseFiles: (id) => api.get(`/projects/${id}/browse_files/`),
+    readFile: (id, path) => api.get(`/projects/${id}/read_file/`, { params: { path } }),
 };
 
 export const apiKeysAPI = {

@@ -96,6 +96,9 @@ class StrictIntentSpec(ValidationRule):
     
     @staticmethod
     def validate(spec: IntentSpecSchema) -> Tuple[bool, str]:
+        if spec.vague_intent:
+            return True, ""  # Allow vague specs to pass for later review
+            
         if spec.project_type == 'web_app' and not spec.features:
             return False, "Project type is too generic ('web_app') and no features specified."
         if not spec.stack.get('backend'):

@@ -15,7 +15,7 @@ export default {
                 // Map to CSS variables
                 cosmic: {
                     cyan: 'rgb(var(--color-primary) / <alpha-value>)',
-                    purple: 'rgb(var(--color-secondary) / <alpha-value>)',
+                    blue: 'rgb(var(--color-secondary) / <alpha-value>)',
                     pink: 'rgb(var(--color-accent) / <alpha-value>)',
                 },
                 space: {

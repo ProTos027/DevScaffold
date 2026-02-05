@@ -17,6 +17,7 @@ class Project(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Pending'),
         ('spec_building', 'Building Intent Spec'),
+        ('review_required', 'Review Required'),
         ('validating', 'Validating'),
         ('planning', 'Building Component Plan'),
         ('graph_building', 'Building Dependency Graph'),
@@ -53,6 +54,17 @@ class Project(models.Model):
     current_stage = models.CharField(max_length=50, blank=True)
     progress = models.IntegerField(default=0)  # 0-100
     error_message = models.TextField(blank=True, null=True)
+    
+    # Selected API key tracking
+    gemini_api_key = models.ForeignKey(
+        'accounts.APIKey',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='projects'
+    )
+    
+    spec_confirmed = models.BooleanField(default=False)
     
     # File storage
     zip_file_path = models.CharField(max_length=500, blank=True, null=True)
@@ -120,6 +132,10 @@ class IntentSpec(models.Model):
     # Constraints (JSON)
     constraints = models.JSONField(default=dict)  # {auth_method, ...}
     
+    # Resilience flags
+    vague_intent = models.BooleanField(default=False)
+    explanation = models.TextField(blank=True, default="")
+    
     # Metadata
     version = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -142,6 +158,8 @@ class IntentSpec(models.Model):
             'architecture': self.architecture,
             'data_entities': self.data_entities,
             'constraints': self.constraints,
+            'vague_intent': self.vague_intent,
+            'explanation': self.explanation,
         }
     
     @classmethod

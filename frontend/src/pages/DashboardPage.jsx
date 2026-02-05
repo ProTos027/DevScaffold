@@ -55,8 +55,14 @@ export default function DashboardPage() {
             setGeminiKeys(geminiKeysList);
             setHasKeys(prev => ({ ...prev, gemini: geminiKeysList.length > 0 }));
 
-            if (geminiKeysList.length > 0 && !geminiApiKeyId) {
-                setGeminiApiKeyId(geminiKeysList[0].id);
+            // Ensure our selected ID is still valid, or pick a new one
+            if (geminiKeysList.length > 0) {
+                const isStillValid = geminiKeysList.some(k => k.id == geminiApiKeyId);
+                if (!geminiApiKeyId || !isStillValid) {
+                    setGeminiApiKeyId(geminiKeysList[0].id);
+                }
+            } else {
+                setGeminiApiKeyId('');
             }
         } catch (error) {
             console.error('Failed to check Gemini keys:', error);

@@ -24,20 +24,37 @@ class PipelineOrchestrator:
         self.project = project
         self.user = project.user
         self.model_provider = project.model_provider
+        self.api_key = None
         
-        # Check if a specific API key was selected
-        if hasattr(project, '_selected_api_key') and project._selected_api_key:
+        # Priority 1: Persistent API key linked to the project
+        if hasattr(project, 'gemini_api_key') and project.gemini_api_key:
+            self.api_key = project.gemini_api_key.get_api_key()
+            
+        # Priority 2: In-memory transient key (for immediate creation flows)
+        if not self.api_key and hasattr(project, '_selected_api_key') and project._selected_api_key:
             self.api_key = project._selected_api_key
-        elif self.model_provider == 'gemini':
-            # Fallback: Get first Gemini key from new APIKey model
+            
+        # Priority 3: Fallback to first available valid Gemini key
+        if not self.api_key and self.model_provider == 'gemini':
             from accounts.models import APIKey
-            gemini_key = APIKey.objects.filter(user=self.user, provider='gemini').first()
-            self.api_key = gemini_key.get_api_key() if gemini_key else None
-        else:
-            raise ValueError(f"Unsupported model provider: {self.model_provider}")
+            # Filter for keys that actually have an encrypted value
+            gemini_keys = APIKey.objects.filter(
+                user=self.user, 
+                provider='gemini'
+            ).exclude(api_key_encrypted='')
+            
+            gemini_key = gemini_keys.first()
+            if gemini_key:
+                self.api_key = gemini_key.get_api_key()
         
         if not self.api_key:
-            raise ValueError(f"User does not have {self.model_provider} API key configured")
+            # Check if they have ANY keys at all (even empty ones) for better error messaging
+            from accounts.models import APIKey
+            total_keys = APIKey.objects.filter(user=self.user, provider=self.model_provider).count()
+            if total_keys > 0:
+                raise ValueError(f"Found {total_keys} keys, but none contain a valid value. Please re-register your API key in the Secret Vault.")
+            else:
+                raise ValueError(f"No {self.model_provider} API key found. Please add one in the Secret Vault.")
     
     def run(self, prompt: str = None) -> bool:
         """
@@ -48,13 +65,29 @@ class PipelineOrchestrator:
             # Use project prompt if not provided
             target_prompt = prompt or self.project.prompt
             
-            # Stage 1: Build Intent Spec
-            self._update_status('spec_building', 'Building Intent Spec', 10)
-            intent_spec = build_spec_from_prompt(
-                target_prompt,
-                self.project.gemini_model,
-                self.api_key
-            )
+            # Stage 1: Build or Load Intent Spec
+            if hasattr(self.project, 'intent_spec') and (self.project.spec_confirmed or self.project.status == 'review_required'):
+                self._update_status('spec_loading', 'Loading Intent Spec', 10)
+                spec_model = self.project.intent_spec
+                from .schemas import IntentSpecSchema, DataEntity
+                intent_spec = IntentSpecSchema(
+                    project_type=spec_model.project_type,
+                    complexity=spec_model.complexity,
+                    stack=spec_model.stack,
+                    features=spec_model.features,
+                    architecture=spec_model.architecture,
+                    data_entities=[DataEntity(**e) for e in spec_model.data_entities],
+                    constraints=spec_model.constraints,
+                    vague_intent=spec_model.vague_intent,
+                    explanation=spec_model.explanation
+                )
+            else:
+                self._update_status('spec_building', 'Building Intent Spec', 15)
+                intent_spec = build_spec_from_prompt(
+                    target_prompt,
+                    self.project.gemini_model,
+                    self.api_key
+                )
             
             # Save Intent Spec (Essential: Save BEFORE validation so user sees what was parsed)
             spec_obj, created = IntentSpec.objects.update_or_create(
@@ -66,12 +99,16 @@ class PipelineOrchestrator:
                     'features': intent_spec.features,
                     'architecture': intent_spec.architecture,
                     'data_entities': [e.model_dump() for e in intent_spec.data_entities],
-                    'constraints': intent_spec.constraints
+                    'constraints': intent_spec.constraints,
+                    'vague_intent': intent_spec.vague_intent,
+                    'explanation': intent_spec.explanation
                 }
             )
             
-            # Stage 2: Validate
-            self._update_status('validating', 'Validating Intent Spec', 25)
+            # Always pause if not confirmed
+            if not self.project.spec_confirmed:
+                self._update_status('review_required', 'Review Specification Required', 30)
+                return True # Stop but not failed
             validation_result = validate_spec(intent_spec)
             
             if not validation_result.is_valid:
@@ -175,7 +212,12 @@ class PipelineOrchestrator:
             return True
             
         except Exception as e:
-            error_msg = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
+            error_str = str(e)
+            if "429" in error_str or "resource exhausted" in error_str.lower() or "quota exhausted" in error_str.lower():
+                error_msg = "api key resource exhausted"
+            else:
+                error_msg = f"{type(e).__name__}: {error_str}\n{traceback.format_exc()}"
+            
             self.project.mark_failed(error_msg)
             return False
     

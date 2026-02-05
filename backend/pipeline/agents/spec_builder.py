@@ -8,19 +8,21 @@ from typing import Optional
 from ..schemas import IntentSpecSchema, DataEntity
 
 
-SPEC_BUILDER_SYSTEM_PROMPT = """You are a literal Intent Specification Parser for DevScaffold.
+SPEC_BUILDER_SYSTEM_PROMPT = """You are a resilient Intent Specification Parser for DevScaffold.
 
-Your ONLY job: Convert natural language prompts into a structured IntentSpecSchema.
+Your primary goal: Convert natural language prompts into a structured IntentSpecSchema.
 
-CRITICAL DIRECTIVES:
-1. BE LITERAL: Only add features, entities, and frameworks EXPLICITLY mentioned or unavoidable (e.g., if they ask for a 'blog', they need 'Posts').
-2. NO HALLUCINATION: If the user says "API only", do NOT add a frontend. If they say "No auth", do NOT add authentication.
-3. FRAMEWORK ACCURACY:
+RESILIENCE & BEST-GUESS DIRECTIVES:
+1. HANDLE VAGUENESS: If the user input is vague, short, or seems like "garbage" (e.g., "abc", "test", "web app"), do NOT fail. Instead, make your best guess for a "standard" project of that likely type.
+2. FLAG VAGUENESS: If you had to make significant assumptions, set `vague_intent: true` and provide a short `explanation` of what you assumed (e.g., "Prompt was too brief; assumed a standard Todo list with FastAPI and SQLite").
+3. ALWAYS PROVIDE A BACKEND: If no backend is mentioned, default to "fastapi" (it's our baseline).
+4. LITERALISM vs. INTELLIGENCE: While you should be literal for specific requests (e.g., "Postgres only"), you must be intelligent for vague ones. 
+5. NO HALLUCINATION: Only add data entities if they are logically required (e.g., 'User' for auth).
+6. FRAMEWORK MAPPING:
    - "Spring Boot", "Java Spring", "Java" → backend: "springboot"
    - "FastAPI", "fast api" → backend: "fastapi"
    - "Express", "Node" → backend: "express"
    - "Django" → backend: "django"
-4. ENTITIES: ONLY create data entities that are essential for the project type or explicitly requested. Do NOT add extra fields or entities "just in case".
 """
 
 
@@ -61,7 +63,11 @@ def build_spec_from_prompt(prompt: str, model_name: str, api_key: str) -> Intent
         return spec
         
     except Exception as e:
+        error_msg = str(e)
+        if "429" in error_msg or "quota" in error_msg.lower() or "exhausted" in error_msg.lower():
+            raise ValueError("Gemini API Quota Exhausted: This API key has hit its limit. Please select or add a different key in your vault.")
+            
         print(f"❌ SPEC BUILDER ERROR: {e}")
         import traceback
         traceback.print_exc()
-        raise ValueError(f"Failed to generate Intent Spec from prompt: {e}")
+        raise ValueError(f"Failed to generate Intent Spec: {e}")

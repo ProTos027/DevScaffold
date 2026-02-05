@@ -1,0 +1,1 @@
+fastapi==0.111.0n richiestanuvicorn[standard]==0.30.1nsqlalchemy==2.0.31npydantic==2.7.3npydantic-settings==2.3.3npython-jose[cryptography]==3.3.0npasslib[bcrypt]==1.7.4nwebsockets==12.0

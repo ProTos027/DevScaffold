@@ -1,0 +1,1 @@
+from app.services.auth import authenticate_user, register_new_user

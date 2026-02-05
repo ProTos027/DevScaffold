@@ -1,0 +1,1 @@
+# Byte-compiled / optimized / DLL files__pycache__/**.pyc*.pyd*.pyo# Distributions and packaging.eggs/build/dist/src/*.egg-info/# Installationvirtualenv/venv/env# Environments.env.local*.env# Testing.pytest_cache/htmlcov/.tox/# Editors.vscode/*# OS.DS_Store# Database.sqlite3*.db# Logs*.log

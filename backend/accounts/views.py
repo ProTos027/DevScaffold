@@ -9,10 +9,11 @@ from .serializers import (
     RegisterSerializer,
     UserSerializer,
     UserProfileSerializer,
-    APIKeySerializer
+    LegacyAPIKeySerializer as APIKeySerializer,
+    APIKeySerializer as NewAPIKeySerializer
 )
 from .models import APIKey
-from .api_key_serializer import APIKeySerializer as NewAPIKeySerializer
+
 
 User = get_user_model()
 

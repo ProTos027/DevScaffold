@@ -45,7 +45,12 @@ class ProjectViewSet(viewsets.ModelViewSet):
         
         # Start pipeline in background thread (in production, use Celery)
         def run_pipeline_async():
-            run_pipeline(project)
+            try:
+                run_pipeline(project)
+            except Exception as e:
+                project.status = 'failed'
+                project.error_message = f"Pipeline Setup Error: {str(e)}"
+                project.save()
         
         thread = threading.Thread(target=run_pipeline_async)
         thread.daemon = True
@@ -68,6 +73,38 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer = IntentSpecSerializer(project.intent_spec)
         return Response(serializer.data)
     
+    @action(detail=True, methods=['post'])
+    def confirm_spec(self, request, pk=None):
+        """
+        POST /api/projects/{id}/confirm-spec/
+        Confirm the current Intent Spec and resume pipeline.
+        """
+        project = self.get_object()
+        
+        if project.status != 'review_required':
+            return Response(
+                {'detail': f'Cannot confirm specification for project in status: {project.status}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        project.spec_confirmed = True
+        project.save()
+        
+        # Resume pipeline in background
+        def resume_pipeline_async():
+            try:
+                run_pipeline(project)
+            except Exception as e:
+                project.status = 'failed'
+                project.error_message = f"Pipeline Resume Error: {str(e)}"
+                project.save()
+            
+        thread = threading.Thread(target=resume_pipeline_async)
+        thread.daemon = True
+        thread.start()
+        
+        return Response({'status': 'confirmed', 'message': 'Pipeline resumed'})
+
     @action(detail=True, methods=['put'])
     def update_intent_spec(self, request, pk=None):
         """
@@ -86,10 +123,31 @@ class ProjectViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         
-        # TODO: Trigger regeneration from validation stage
+        # Automatically confirm if updated during review
+        if project.status == 'review_required':
+            project.spec_confirmed = True
+            project.save()
+            
+            # Resume pipeline in background
+            def resume_pipeline_async():
+                try:
+                    run_pipeline(project)
+                except Exception as e:
+                    project.status = 'failed'
+                    project.error_message = f"Pipeline Update Error: {str(e)}"
+                    project.save()
+                    
+            thread = threading.Thread(target=resume_pipeline_async)
+            thread.daemon = True
+            thread.start()
+            
+            return Response({
+                'message': 'Intent Spec updated and confirmed. Pipeline resumed.',
+                'intent_spec': serializer.data
+            })
         
         return Response({
-            'message': 'Intent Spec updated. Regeneration not yet implemented.',
+            'message': 'Intent Spec updated.',
             'intent_spec': serializer.data
         })
     
@@ -153,3 +211,108 @@ class ProjectViewSet(viewsets.ModelViewSet):
             filename=f"{project.name or f'project_{project.id}'}.zip"
         )
         return response
+
+    @action(detail=True, methods=['get'])
+    def browse_files(self, request, pk=None):
+        """
+        GET /api/projects/{id}/browse-files/
+        List all files in the generated repository.
+        """
+        project = self.get_object()
+        
+        if not project.repo_directory:
+            return Response(
+                {'detail': 'Project repository not yet created'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        repo_path = Path(project.repo_directory)
+        if not repo_path.exists():
+            return Response(
+                {'detail': 'Repository directory not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        def get_file_tree(path, root_path):
+            items = []
+            for item in sorted(path.iterdir(), key=lambda x: (not x.is_dir(), x.name)):
+                if item.name == '.git' or item.name == '__pycache__':
+                    continue
+                    
+                relative_path = str(item.relative_to(root_path))
+                node = {
+                    'name': item.name,
+                    'path': relative_path,
+                    'is_dir': item.is_dir(),
+                }
+                if item.is_dir():
+                    node['children'] = get_file_tree(item, root_path)
+                items.append(node)
+            return items
+            
+        tree = get_file_tree(repo_path, repo_path)
+        return Response(tree)
+
+    @action(detail=True, methods=['get'])
+    def read_file(self, request, pk=None):
+        """
+        GET /api/projects/{id}/read-file/?path=filename
+        Read content of a specific file.
+        """
+        project = self.get_object()
+        file_path_rel = request.query_params.get('path')
+        
+        if not file_path_rel:
+            return Response(
+                {'detail': 'File path is required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        if not project.repo_directory:
+            return Response(
+                {'detail': 'Project repository not yet created'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        repo_path = Path(project.repo_directory)
+        full_path = (repo_path / file_path_rel).resolve()
+        
+        # Security check: ensure path is within repo_directory
+        if not str(full_path).startswith(str(repo_path.resolve())):
+            return Response(
+                {'detail': 'Access denied'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+            
+        if not full_path.exists() or not full_path.is_file():
+            return Response(
+                {'detail': 'File not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        try:
+            with open(full_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # Determine language for Monaco
+            ext = full_path.suffix.lower()
+            language = 'plaintext'
+            if ext in ['.js', '.jsx']: language = 'javascript'
+            elif ext in ['.ts', '.tsx']: language = 'typescript'
+            elif ext == '.py': language = 'python'
+            elif ext == '.html': language = 'html'
+            elif ext == '.css': language = 'css'
+            elif ext == '.json': language = 'json'
+            elif ext == '.md': language = 'markdown'
+            elif ext == '.yml' or ext == '.yaml': language = 'yaml'
+            
+            return Response({
+                'content': content,
+                'language': language,
+                'path': file_path_rel
+            })
+        except Exception as e:
+            return Response(
+                {'detail': f'Error reading file: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
