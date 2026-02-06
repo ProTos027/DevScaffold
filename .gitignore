@@ -15,6 +15,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 db.sqlite3
+.backend/storage/generated_repos
 storage/generated_repos/*
 !storage/generated_repos/.gitkeep
 
