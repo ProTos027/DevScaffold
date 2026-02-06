@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { projectsAPI, authAPI, apiKeysAPI } from '../api/client';
 import { useTheme } from '../context/ThemeContext';
+import CustomSelect from '../components/CustomSelect';
 
 export default function DashboardPage() {
     const [projects, setProjects] = useState([]);
@@ -166,16 +167,16 @@ export default function DashboardPage() {
             {/* Sidebar Backdrop */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 transition-opacity duration-300"
+                    className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-300"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
-            <div className={`fixed inset-y-0 left-0 w-72 z-50 glass-card !rounded-none !rounded-r-xl border-r border-white/20 p-8 flex flex-col transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <div className={`fixed inset-y-0 left-0 w-72 z-50 bg-[rgb(var(--bg-secondary))] !rounded-none !rounded-r-xl border-r border-[rgb(var(--border-primary))] p-8 flex flex-col transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 {/* User Profile Info */}
-                <div className="flex items-center gap-4 mb-10 pb-6 border-b border-black/10 dark:border-white/10">
-                    <div className="w-12 h-12 rounded-full bg-cosmic-cyan flex items-center justify-center text-xl font-bold text-space-900">
+                <div className="flex items-center gap-4 mb-10 pb-6 border-b border-[rgb(var(--border-primary))]">
+                    <div className="w-12 h-12 rounded-full bg-[rgb(var(--bg-primary))] border-2 border-[rgb(var(--color-primary))] flex items-center justify-center text-xl font-bold text-[rgb(var(--color-primary))]">
                         {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase()}
                     </div>
                     <div>
@@ -189,7 +190,7 @@ export default function DashboardPage() {
                 <div className="space-y-1 mb-6">
                     <button
                         onClick={() => { setIsSidebarOpen(false); }}
-                        className="w-full flex items-center gap-3 px-4 py-2 rounded-xl bg-white/10 text-cosmic-cyan font-medium"
+                        className="w-full flex items-center gap-3 px-4 py-2 rounded-xl bg-[rgb(var(--bg-secondary)/0.5)] text-[rgb(var(--color-primary))] font-medium border border-[rgb(var(--border-primary))]"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -198,7 +199,7 @@ export default function DashboardPage() {
 
                     <button
                         onClick={openAPIKeysModal}
-                        className="w-full flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-white/5 transition-colors text-left text-sm"
+                        className="w-full flex items-center gap-3 px-4 py-2 rounded-xl hover:bg-[rgb(var(--bg-secondary)/0.5)] transition-colors text-left text-sm"
                     >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -211,32 +212,32 @@ export default function DashboardPage() {
                     <div className="pt-2">
 
                         <div className="pt-8">
-                            <div className="text-xs uppercase tracking-widest text-gray-500 mb-6 px-4 flex justify-between items-center">
+                            <div className="text-meta text-[rgb(var(--text-secondary))] mb-6 px-4 flex justify-between items-center">
                                 <span>Past Projects</span>
-                                <span className="bg-white/5 px-2 py-0.5 rounded text-[10px]">{projects.length}</span>
+                                <span className="bg-[rgb(var(--bg-secondary)/0.5)] px-2 py-0.5 rounded text-[10px] opacity-100">{projects.length}</span>
                             </div>
                             <div className="space-y-3">
                                 {projects.map(p => (
-                                    <div key={p.id} className="group flex items-center justify-between glass-card !bg-white/5 !border-white/5 hover:!border-white/20 p-2 transition-all hover:scale-[1.01]">
+                                    <div key={p.id} className="group flex items-center justify-between bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] hover:border-[rgb(var(--color-primary)/0.3)] p-2 rounded-xl transition-all hover:scale-[1.01]">
                                         <div
                                             onClick={() => { setIsSidebarOpen(false); navigate(`/project/${p.id}`); }}
                                             className="flex-1 cursor-pointer flex items-center gap-2 min-w-0"
                                         >
-                                            <span className={`w-2 h-2 rounded-full shrink-0 ${p.status === 'completed' ? 'bg-green-500' :
-                                                p.status === 'failed' ? 'bg-red-500' : 'bg-cosmic-cyan animate-pulse'
+                                            <span className={`w-2.5 h-2.5 rounded-full shrink-0 border border-[rgb(var(--color-primary))] ${p.status === 'completed' ? 'bg-[rgb(var(--status-success))] !border-none' :
+                                                p.status === 'failed' ? 'bg-[rgb(var(--status-error))] !border-none' : 'bg-[rgb(var(--bg-primary))] animate-pulse'
                                                 }`} title={p.status} />
-                                            <div className="font-bold text-xs truncate group-hover:text-cosmic-cyan transition-colors" title={p.name || `Project ${p.id}`}>
+                                            <div className="font-bold text-xs truncate transition-colors" title={p.name || `Project ${p.id}`}>
                                                 {p.name || `P#${p.id}`}
                                             </div>
-                                            <span className="text-[9px] text-gray-500 shrink-0">{p.progress}%</span>
+                                            <span className="text-[9px] text-[rgb(var(--text-secondary))] shrink-0">{p.progress}%</span>
                                         </div>
 
                                         {/* Inline Actions */}
-                                        <div className="flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <div className="flex gap-1 items-center transition-transform hover:scale-110">
                                             {p.status === 'completed' && (
                                                 <button
                                                     onClick={(e) => handleDownload(e, p)}
-                                                    className="p-1.5 rounded-md bg-green-500/10 hover:bg-green-500/20 text-green-400"
+                                                    className="p-1.5 rounded-md bg-[rgb(var(--status-success)/0.1)] hover:bg-[rgb(var(--status-success)/0.2)] text-[rgb(var(--status-success))]"
                                                     title="Download ZIP"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -247,7 +248,7 @@ export default function DashboardPage() {
                                             {p.status === 'failed' && (
                                                 <button
                                                     onClick={(e) => handleRetry(e, p)}
-                                                    className="p-1.5 rounded-md bg-cosmic-cyan/10 hover:bg-cosmic-cyan/20 text-cosmic-cyan"
+                                                    className="p-1.5 rounded-md bg-[rgb(var(--color-primary)/0.1)] hover:bg-[rgb(var(--color-primary)/0.2)] text-[rgb(var(--color-primary))]"
                                                     title="Retry Generation"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +259,7 @@ export default function DashboardPage() {
                                             {p.status !== 'completed' && p.status !== 'failed' && (
                                                 <button
                                                     onClick={(e) => handleTerminate(e, p.id)}
-                                                    className="p-1.5 rounded-md bg-yellow-500/10 hover:bg-yellow-500/20 text-yellow-400"
+                                                    className="p-1.5 rounded-md bg-[rgb(var(--status-warning)/0.1)] hover:bg-[rgb(var(--status-warning)/0.2)] text-[rgb(var(--status-warning))]"
                                                     title="Terminate Build"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -280,7 +281,7 @@ export default function DashboardPage() {
                                     </div>
                                 ))}
                                 {projects.length === 0 && (
-                                    <div className="px-4 py-8 text-center text-xs text-gray-600 italic">No projects recorded.</div>
+                                    <div className="px-4 py-8 text-center text-xs text-[rgb(var(--text-secondary))] italic">No projects recorded.</div>
                                 )}
                             </div>
                         </div>
@@ -288,16 +289,16 @@ export default function DashboardPage() {
                 </nav>
 
                 {/* Bottom Actions */}
-                <div className="pt-6 border-t border-black/10 dark:border-white/10 space-y-4">
-                    <button onClick={toggleTheme} className="w-full flex items-center justify-between px-4 py-2 rounded-lg hover:bg-white/5 transition-colors">
+                <div className="pt-6 border-t border-[rgb(var(--border-primary))] space-y-4">
+                    <button onClick={toggleTheme} className="w-full flex items-center justify-between px-4 py-2 rounded-lg hover:bg-[rgb(var(--bg-secondary)/0.5)] transition-colors">
                         <span className="text-sm">Theme</span>
                         <span>
                             {isDark ? (
-                                <svg className="w-5 h-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
                                 </svg>
                             ) : (
-                                <svg className="w-5 h-5 text-cosmic-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg className="w-5 h-5 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                                 </svg>
                             )}
@@ -305,7 +306,7 @@ export default function DashboardPage() {
                     </button>
                     <button
                         onClick={logout}
-                        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 transition-colors"
+                        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[rgb(var(--status-error)/0.1)] hover:bg-[rgb(var(--status-error)/0.2)] text-[rgb(var(--status-error))] transition-colors border border-[rgb(var(--status-error)/0.1)]"
                     >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -315,25 +316,25 @@ export default function DashboardPage() {
             </div>
 
             {/* Header */}
-            <header className="glass-card m-4 p-4 flex justify-between items-center relative">
+            <header className="bg-[rgb(var(--bg-secondary))] !rounded-none py-4 px-8 flex justify-between items-center sticky top-0 z-40 w-full border-x-0 border-t-0 border-b border-[rgb(var(--color-brand-separator)/0.3)]">
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => setIsSidebarOpen(true)}
-                        className="p-2 hover:bg-white/10 rounded-lg transition-colors group"
+                        className="p-2 transition-transform hover:scale-110 group"
                         aria-label="Toggle Project Navigator"
                     >
-                        <svg className="w-6 h-6 group-hover:text-cosmic-cyan transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-6 h-6 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                         </svg>
                     </button>
                     <div className="text-3xl font-display font-bold cursor-pointer" onClick={() => navigate('/')}>
-                        <span className="gradient-text-primary">DevScaffold</span>
+                        <span className="text-brand-gradient">DevScaffold</span>
                     </div>
                 </div>
 
                 <div className="flex items-center gap-4">
-                    <span className="hidden md:block text-xs text-gray-500 uppercase tracking-[0.2em] font-medium opacity-50">Generator</span>
-                    <div className="w-8 h-8 rounded-full bg-cosmic-cyan flex items-center justify-center text-xs font-bold border border-white/20 text-space-900">
+                    <span className="hidden md:block text-label text-[rgb(var(--text-secondary))] opacity-50">Generator</span>
+                    <div className="w-8 h-8 rounded-full bg-cosmic-cyan flex items-center justify-center text-xs font-bold border border-[rgb(var(--border-primary))] text-[rgb(var(--bg-primary))]">
                         {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase()}
                     </div>
                 </div>
@@ -341,35 +342,34 @@ export default function DashboardPage() {
 
             {/* Main Content Area - Unified Command Center */}
             <main className="p-4 max-w-4xl mx-auto pt-10">
-                <div className="glass-card p-12 shadow-2xl animate-fade-in relative overflow-hidden">
-                    {/* Decorative Background Element */}
-                    <div className="absolute -top-24 -right-24 w-64 h-64 bg-cosmic-cyan/10 rounded-full blur-3xl"></div>
-                    <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-cosmic-purple/10 rounded-full blur-3xl"></div>
+                <div className="bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] rounded-3xl p-12 animate-fade-in relative">
+                    {/* Decorative Background Element - Removed Blur/Glow */}
+
 
                     <div className="relative z-10 text-center mb-12">
-                        <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">Initialize <span className="text-cosmic-cyan">Pipeline</span></h2>
-                        <p className="text-gray-500 max-w-xl mx-auto">Input prompt below. Our multi-agent system will handle the architectural specification, contract derivation, and production-ready code generation.</p>
+                        <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">Initialize <span className="text-gold-solid">Pipeline</span></h2>
+                        <p className="text-[rgb(var(--text-secondary))] max-w-xl mx-auto">Input prompt below. Our multi-agent system will handle the architectural specification, contract derivation, and production-ready code generation.</p>
                     </div>
 
                     <form onSubmit={handleCreateProject} className="space-y-10 relative z-10">
                         <div className="space-y-6">
                             <div className="group">
-                                <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 group-focus-within:text-cosmic-cyan transition-colors px-2">Title</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-secondary))] mb-3 px-2">Title</label>
                                 <input
                                     type="text"
                                     value={projectName}
                                     onChange={(e) => setProjectName(e.target.value)}
-                                    className="input-field w-full text-xl py-5 px-6 !bg-white/5 border-white/5 focus:border-cosmic-cyan/50 transition-all font-display"
+                                    className="input-field w-full text-xl py-5 px-6 !bg-[rgb(var(--bg-secondary)/0.5)] border-[rgb(var(--border-primary))] transition-all font-display"
                                     placeholder="e.g. Banking Platform"
                                 />
                             </div>
 
                             <div className="group">
-                                <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 group-focus-within:text-cosmic-cyan transition-colors px-2">Prompt</label>
+                                <label className="block text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-secondary))] mb-3 px-2">Prompt</label>
                                 <textarea
                                     value={prompt}
                                     onChange={(e) => setPrompt(e.target.value)}
-                                    className="input-field w-full h-48 resize-none py-5 px-6 !bg-white/5 border-white/5 focus:border-cosmic-cyan/50 transition-all leading-relaxed"
+                                    className="input-field w-full h-48 resize-none py-5 px-6 !bg-[rgb(var(--bg-secondary)/0.5)] border-[rgb(var(--border-primary))] transition-all leading-relaxed"
                                     placeholder="Describe your vision... (e.g. Build a real estate portal with AI-driven valuation and Mapbox integration)"
                                     required
                                 />
@@ -377,48 +377,46 @@ export default function DashboardPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div className="group">
-                                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 px-2">API Key</label>
+                                    <label className="block text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-secondary))] mb-3 px-2">API Key</label>
                                     {!hasKeys.gemini ? (
                                         <button
                                             type="button"
                                             onClick={openAPIKeysModal}
-                                            className="w-full py-4 rounded-2xl bg-yellow-500/5 text-yellow-500 text-sm border border-yellow-500/10 hover:bg-yellow-500/10 transition-all flex items-center justify-center gap-2 font-bold"
+                                            className="w-full py-4 rounded-2xl bg-[rgb(var(--status-warning)/0.05)] text-[rgb(var(--status-warning))] text-sm border border-[rgb(var(--status-warning)/0.1)] hover:bg-[rgb(var(--status-warning)/0.1)] transition-all flex items-center justify-center gap-2 font-bold"
                                         >
                                             ⚠️ Setup API Key to Proceed
                                         </button>
                                     ) : (
-                                        <select
+                                        <CustomSelect
+                                            options={geminiKeys.map(key => ({
+                                                id: key.id,
+                                                label: `Key: ${key.name || `...${key.key_preview}`}`
+                                            }))}
                                             value={geminiApiKeyId}
-                                            onChange={(e) => setGeminiApiKeyId(e.target.value)}
-                                            className="input-field w-full py-4 px-6"
-                                        >
-                                            {geminiKeys.map((key) => (
-                                                <option key={key.id} value={key.id} className="bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))]">
-                                                    Key: {key.name || `...${key.key_preview}`}
-                                                </option>
-                                            ))}
-                                        </select>
+                                            onChange={setGeminiApiKeyId}
+                                            placeholder="Choose API Key"
+                                        />
                                     )}
                                 </div>
                                 <div className="group">
-                                    <label className="block text-xs font-bold uppercase tracking-widest text-gray-500 mb-3 px-2">Model</label>
-                                    <select
+                                    <CustomSelect
+                                        label="Model"
+                                        options={[
+                                            { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Optimized)' },
+                                            { value: 'gemini-2.5-pro', label: 'Gemini 2 Pro (Superior Reasoning)' },
+                                            { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro (Stability)' },
+                                            { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash (Latency)' },
+                                        ]}
                                         value={geminiModel}
-                                        onChange={(e) => setGeminiModel(e.target.value)}
-                                        className="input-field w-full py-4 px-6"
-                                    >
-                                        <option value="gemini-2.5-flash" className="bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))]">Gemini 2.5 Flash (Optimized)</option>
-                                        <option value="gemini-2.5-pro" className="bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))]">Gemini 2 Pro (Superior Reasoning)</option>
-                                        <option value="gemini-1.5-pro" className="bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))]">Gemini 1.5 Pro (Stability)</option>
-                                        <option value="gemini-1.5-flash" className="bg-[rgb(var(--bg-secondary))] text-[rgb(var(--text-primary))]">Gemini 1.5 Flash (Latency)</option>
-                                    </select>
+                                        onChange={setGeminiModel}
+                                    />
                                 </div>
                             </div>
                         </div>
 
                         <button
                             type="submit"
-                            className="neon-button w-full py-6 text-xl mt-8 font-display font-bold shadow-glow-cyan/50 hover:shadow-glow-purple/50 transition-all uppercase tracking-widest flex items-center justify-center gap-4"
+                            className="neon-button w-full py-6 text-xl mt-8 font-display font-bold transition-all uppercase tracking-widest flex items-center justify-center gap-4"
                         >
                             <svg className="w-6 h-6 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -427,29 +425,29 @@ export default function DashboardPage() {
                     </form>
                 </div>
 
-                <div className="mt-12 text-center text-xs text-gray-600 uppercase tracking-[0.5em] opacity-30 select-none">
+                <div className="mt-12 text-center text-xs text-[rgb(var(--text-secondary))] uppercase tracking-[0.5em] opacity-30 select-none">
                     Entropy Strictly Decreases
                 </div>
             </main>
 
             {/* API Keys Modal */}
             {showAPIKeysModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[70]">
-                    <div className="glass-card p-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl animate-fade-in relative">
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-[70]">
+                    <div className="glass-3 p-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-fade-in">
                         <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-3xl font-display font-bold">Secret <span className="text-cosmic-purple">Vault</span></h2>
-                            <button onClick={() => setShowAPIKeysModal(false)} className="text-gray-400 hover:text-white transition-colors">
+                            <h2 className="text-3xl font-display font-bold">Secret <span className="text-gold-solid">Vault</span></h2>
+                            <button onClick={() => setShowAPIKeysModal(false)} className="text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] transition-colors">
                                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </button>
                         </div>
-                        <p className="text-xs text-gray-500 mb-10 uppercase tracking-widest opacity-50">Multi-Provider Key Orchestration</p>
+                        <p className="text-meta text-[rgb(var(--text-secondary))] mb-10">Multi-Provider Key Orchestration</p>
 
                         {/* Add New Key Form */}
-                        <div className="mb-10 p-8 bg-white/5 rounded-3xl border border-white/5 shadow-inner">
-                            <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-gray-400 uppercase tracking-widest">
-                                <svg className="w-4 h-4 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="mb-10 p-8 bg-[rgb(var(--bg-secondary)/0.3)] rounded-3xl border border-[rgb(var(--border-primary))]">
+                            <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-[rgb(var(--text-secondary))] uppercase tracking-widest">
+                                <svg className="w-4 h-4 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg> Register New Credential
                             </h3>
@@ -466,19 +464,14 @@ export default function DashboardPage() {
                                 }
                             }} className="space-y-5">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <CustomSelect
+                                        label="Engine"
+                                        options={[{ value: 'gemini', label: 'Google Gemini' }]}
+                                        value={newKeyForm.provider}
+                                        onChange={(val) => setNewKeyForm({ ...newKeyForm, provider: val })}
+                                    />
                                     <div className="space-y-2">
-                                        <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-tighter px-1">Engine</label>
-                                        <select
-                                            value={newKeyForm.provider}
-                                            onChange={(e) => setNewKeyForm({ ...newKeyForm, provider: e.target.value })}
-                                            className="input-field w-full text-xs py-3"
-                                            required
-                                        >
-                                            <option value="gemini" className="bg-[rgb(var(--bg-secondary))]">Google Gemini</option>
-                                        </select>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-tighter px-1">Name</label>
+                                        <label className="block text-label text-[rgb(var(--text-secondary))] px-1">Name</label>
                                         <input
                                             type="text"
                                             value={newKeyForm.name}
@@ -490,7 +483,7 @@ export default function DashboardPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="block text-[10px] font-bold text-gray-600 uppercase tracking-tighter px-1">API Key</label>
+                                    <label className="block text-label text-[rgb(var(--text-secondary))] px-1">API Key</label>
                                     <input
                                         type="password"
                                         value={newKeyForm.apiKey}
@@ -500,7 +493,7 @@ export default function DashboardPage() {
                                         required
                                     />
                                 </div>
-                                <button type="submit" className="w-full py-4 rounded-2xl bg-cosmic-cyan/10 hover:bg-cosmic-cyan/20 border border-white/10 transition-all font-bold text-xs uppercase tracking-widest text-cosmic-cyan">
+                                <button type="submit" className="w-full py-4 rounded-2xl bg-cosmic-cyan/10 hover:bg-cosmic-cyan/20 border border-[rgb(var(--border-primary))] transition-all font-bold text-xs uppercase tracking-widest text-cosmic-cyan">
                                     Authorize Secret
                                 </button>
                             </form>
@@ -508,24 +501,24 @@ export default function DashboardPage() {
 
                         {/* Existing Keys List */}
                         <div className="space-y-6">
-                            <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-gray-400 uppercase tracking-widest">
+                            <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-[rgb(var(--text-secondary))] uppercase tracking-widest">
                                 <svg className="w-4 h-4 text-cosmic-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                                 </svg> Active Credentials
                             </h3>
                             {!userApiKeys || userApiKeys.length === 0 ? (
-                                <div className="text-gray-600 text-center py-16 glass-card !bg-transparent !border-dashed border-white/10 rounded-3xl">
+                                <div className="text-[rgb(var(--text-secondary))] text-center py-16 glass-card !bg-transparent !border-dashed border-[rgb(var(--border-primary))] rounded-3xl">
                                     <p className="text-sm italic">No credentials currently authorized.</p>
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-1 gap-4">
                                     {userApiKeys.map((key) => (
-                                        <div key={key.id} className="group flex items-center justify-between p-5 glass-card !bg-white/5 !border-white/5 hover:!border-white/20 transition-all relative overflow-hidden">
+                                        <div key={key.id} className="group flex items-center justify-between p-5 glass-card !bg-[rgb(var(--bg-secondary)/0.5)] !border-[rgb(var(--border-primary))] hover:!border-[rgb(var(--border-primary)/0.4)] transition-all relative overflow-hidden">
                                             <div className="absolute top-0 left-0 w-1 h-full bg-cosmic-cyan opacity-50 group-hover:opacity-100 transition-opacity"></div>
                                             <div>
                                                 <div className="font-bold text-sm tracking-tight">{key.name}</div>
-                                                <div className="text-[10px] text-gray-500 uppercase flex gap-4 mt-2">
-                                                    <span className="text-cosmic-cyan font-bold">{key.provider}</span>
+                                                <div className="text-[10px] text-[rgb(var(--text-secondary))] uppercase flex gap-4 mt-2">
+                                                    <span className="text-[rgb(var(--color-primary))] font-bold">{key.provider}</span>
                                                     <span>Vault ID: ...${key.id.toString().slice(-4)}</span>
                                                     <span>Registered: {new Date(key.created_at).toLocaleDateString()}</span>
                                                 </div>

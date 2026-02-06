@@ -17,6 +17,7 @@ export default {
                     cyan: 'rgb(var(--color-primary) / <alpha-value>)',
                     blue: 'rgb(var(--color-secondary) / <alpha-value>)',
                     pink: 'rgb(var(--color-accent) / <alpha-value>)',
+                    purple: 'rgb(var(--color-secondary-accent) / <alpha-value>)',
                 },
                 space: {
                     950: 'rgb(var(--bg-primary) / <alpha-value>)',

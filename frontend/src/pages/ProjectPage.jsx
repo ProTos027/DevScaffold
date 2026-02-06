@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ReactFlow, { Background, Controls, MarkerType } from 'reactflow';
 import dagre from 'dagre';
 import Editor from "@monaco-editor/react";
 import 'reactflow/dist/style.css';
 import { projectsAPI } from '../api/client';
+import CustomSelect from '../components/CustomSelect';
 
 const DependencyGraph = ({ components }) => {
     const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
@@ -20,20 +21,20 @@ const DependencyGraph = ({ components }) => {
             const isBackend = comp.type.includes('backend') || comp.type.includes('service') || comp.type.includes('controller');
 
             // Modern, clean colors
-            let borderColor = 'rgba(255,255,255,0.1)';
-            let textColor = '#fff';
-            let bgColor = '#0d0d12'; // Neutral dark grey to match app background
+            let borderColor = 'rgb(var(--node-border-default))';
+            let textColor = 'rgb(var(--node-text))';
+            let bgColor = 'rgb(var(--node-bg))';
             let glowColor = 'transparent';
 
             if (isData) {
-                borderColor = '#3b82f6'; // Blue
-                glowColor = 'rgba(59, 130, 246, 0.1)';
+                borderColor = 'rgb(var(--node-data))';
+                glowColor = 'rgb(var(--node-data) / 0.1)';
             } else if (isFrontend) {
-                borderColor = '#10b981'; // Green/Emerald
-                glowColor = 'rgba(16, 185, 129, 0.1)';
+                borderColor = 'rgb(var(--node-frontend))';
+                glowColor = 'rgb(var(--node-frontend) / 0.1)';
             } else if (isBackend) {
-                borderColor = '#f59e0b'; // Amber/Gold
-                glowColor = 'rgba(245, 158, 11, 0.1)';
+                borderColor = 'rgb(var(--node-backend))';
+                glowColor = 'rgb(var(--node-backend) / 0.1)';
             }
 
             const node = {
@@ -43,8 +44,8 @@ const DependencyGraph = ({ components }) => {
                     label: (
                         <div className="p-1">
                             <div className="text-[7px] uppercase font-black mb-1 opacity-50 tracking-widest" style={{ color: borderColor }}>{comp.type.replace(/_/g, ' ')}</div>
-                            <div className="text-[10px] font-bold text-white mb-1 truncate">{comp.id}</div>
-                            <div className="text-[7px] text-gray-500 line-clamp-1 leading-tight font-medium">
+                            <div className="text-[10px] font-bold mb-1 truncate" style={{ color: 'rgb(var(--node-text))' }}>{comp.id}</div>
+                            <div className="text-[7px] text-[rgb(var(--text-secondary))] line-clamp-1 leading-tight font-medium">
                                 {comp.responsibilities[0]}
                             </div>
                         </div>
@@ -56,8 +57,8 @@ const DependencyGraph = ({ components }) => {
                     borderRadius: isData ? '6px' : '16px', // Different shapes: Sharper for data, rounded for logic
                     width: 180,
                     padding: '8px',
-                    boxShadow: `0 0 15px ${glowColor}`,
-                    transition: 'all 0.3s ease'
+                    transition: 'all 0.3s ease',
+                    fontFamily: 'var(--font-main)'
                 }
             };
 
@@ -75,8 +76,8 @@ const DependencyGraph = ({ components }) => {
                         source: depId,
                         target: comp.id,
                         animated: false,
-                        style: { stroke: 'rgba(255,255,255,0.15)', strokeWidth: 1 },
-                        markerEnd: { type: MarkerType.ArrowClosed, color: 'rgba(255,255,255,0.3)' },
+                        style: { stroke: 'rgb(var(--text-primary) / 0.3)', strokeWidth: 1.5 },
+                        markerEnd: { type: MarkerType.ArrowClosed, color: 'rgb(var(--text-primary) / 0.5)' },
                     });
                     dagreGraph.setEdge(depId, comp.id);
                 });
@@ -103,37 +104,37 @@ const DependencyGraph = ({ components }) => {
 
     return (
         <div className="space-y-4">
-            <div style={{ height: '550px' }} className="w-full bg-space-950/20 rounded-2xl border border-white/5 overflow-hidden relative">
-                <div className="absolute top-4 left-4 z-10 p-3 bg-black/40 backdrop-blur-md rounded-xl border border-white/5">
-                    <div className="text-[10px] font-bold text-cosmic-cyan uppercase tracking-widest mb-1">Architecture Preview</div>
-                    <div className="text-[9px] text-gray-500 uppercase">Interactive Schema</div>
+            <div style={{ height: '550px' }} className="w-full bg-[rgb(var(--bg-secondary))] rounded-2xl border border-[rgb(var(--border-primary))] overflow-hidden relative">
+                <div className="absolute top-4 left-4 z-10 p-3 bg-[rgb(var(--bg-primary))] rounded-xl border border-[rgb(var(--border-primary))]">
+                    <div className="badge-gold mb-1">Architecture Preview</div>
+                    <div className="text-[9px] text-[rgb(var(--text-secondary))] uppercase">Interactive Schema</div>
                 </div>
 
                 <ReactFlow nodes={layoutedNodes} edges={layoutedEdges} fitView className="bg-transparent">
-                    <Controls position="top-right" className="bg-black/50 border-white/10" />
+                    <Controls position="top-right" className="bg-[rgb(var(--bg-secondary)/0.5)] border-[rgb(var(--border-primary))] !text-[rgb(var(--text-primary))]" />
                 </ReactFlow>
 
                 <div className="absolute bottom-4 left-4 z-10 flex flex-wrap gap-2">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-lg border border-white/5">
-                        <div className="w-2 h-2 rounded-sm border border-[#3b82f6] shadow-[0_0_5px_rgba(59,130,246,0.3)]"></div>
-                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Data Model</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgb(var(--bg-primary))] rounded-lg border border-[rgb(var(--border-primary))] transition-transform hover:scale-105">
+                        <div className="w-2 h-2 rounded-sm border border-[rgb(var(--node-data))]"></div>
+                        <span className="text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Data Model</span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-lg border border-white/5">
-                        <div className="w-2 h-2 rounded-full border border-[#f59e0b] shadow-[0_0_5px_rgba(245,158,11,0.3)]"></div>
-                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Backend</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgb(var(--bg-secondary)/0.4)] backdrop-blur-md rounded-lg border border-[rgb(var(--border-primary))] transition-transform hover:scale-105">
+                        <div className="w-2 h-2 rounded-full border border-[rgb(var(--node-backend))]"></div>
+                        <span className="text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Backend</span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-black/40 backdrop-blur-md rounded-lg border border-white/5">
-                        <div className="w-2 h-2 rounded-full border border-[#10b981] shadow-[0_0_5px_rgba(16,185,129,0.3)]"></div>
-                        <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Frontend</span>
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgb(var(--bg-secondary)/0.4)] backdrop-blur-md rounded-lg border border-[rgb(var(--border-primary))] transition-transform hover:scale-105">
+                        <div className="w-2 h-2 rounded-full border border-[rgb(var(--node-frontend))]"></div>
+                        <span className="text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Frontend</span>
                     </div>
                 </div>
 
-                <div className="absolute bottom-4 right-4 z-10 p-2 px-3 bg-black/40 backdrop-blur-md rounded-lg border border-white/5 flex items-center gap-2">
+                <div className="absolute bottom-4 right-4 z-10 p-2 px-3 bg-[rgb(var(--bg-secondary)/0.4)] backdrop-blur-md rounded-lg border border-[rgb(var(--border-primary))] flex items-center gap-2">
                     <div className="flex items-center">
-                        <div className="w-4 h-[1px] bg-white/40"></div>
-                        <div className="w-0 h-0 border-t-[3px] border-t-transparent border-l-[6px] border-l-white/40 border-b-[3px] border-b-transparent -ml-[1px]"></div>
+                        <div className="w-4 h-[1px] bg-[rgb(var(--text-primary)/0.4)]"></div>
+                        <div className="w-0 h-0 border-t-[3px] border-t-transparent border-l-[6px] border-l-[rgb(var(--text-primary)/0.4)] border-b-[3px] border-b-transparent -ml-[1px]"></div>
                     </div>
-                    <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">Arrow: Depends On</span>
+                    <span className="text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Arrow: Depends On</span>
                 </div>
             </div>
         </div>
@@ -191,7 +192,7 @@ const CodePreview = ({ projectId }) => {
         return (
             <div>
                 <div
-                    className={`flex items-center gap-2 px-2 py-1 cursor-pointer hover:bg-white/5 rounded transition-colors ${selectedFile?.path === item.path ? 'bg-cosmic-cyan/10 text-cosmic-cyan' : 'text-gray-400'}`}
+                    className={`flex items-center gap-2 px-2 py-1 cursor-pointer transition-transform hover:scale-[1.02] rounded ${selectedFile?.path === item.path ? 'bg-[rgb(var(--code-selected))] text-cosmic-cyan' : 'text-[rgb(var(--text-secondary))]'}`}
                     style={{ paddingLeft: `${depth * 16 + 8}px` }}
                     onClick={() => item.is_dir ? setIsOpen(!isOpen) : handleFileSelect(item.path)}
                 >
@@ -217,40 +218,40 @@ const CodePreview = ({ projectId }) => {
         );
     };
 
-    if (loading) return <div className="p-8 text-center animate-pulse text-cosmic-cyan">Mapping repository files...</div>;
-    if (fileTree.length === 0) return <div className="p-8 text-center text-gray-500">No files found. The build might still be in progress.</div>;
+    if (loading) return <div className="p-8 text-center animate-pulse text-[rgb(var(--color-primary))]">Mapping repository files...</div>;
+    if (fileTree.length === 0) return <div className="p-8 text-center text-[rgb(var(--text-secondary))]">No files found. The build might still be in progress.</div>;
 
     return (
-        <div className="flex h-[600px] bg-black/20 rounded-2xl border border-white/5 overflow-hidden">
+        <div className="flex h-[600px] bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] overflow-hidden">
             {/* Sidebar */}
-            <div className="w-64 border-r border-white/5 bg-black/40 backdrop-blur-md overflow-y-auto p-2 custom-scrollbar">
-                <div className="text-[10px] uppercase font-black text-gray-500 mb-4 px-2 tracking-widest">Project Explorer</div>
+            <div className="w-64 border-r border-[rgb(var(--code-sidebar-border))] bg-[rgb(var(--code-sidebar-bg))] backdrop-blur-md overflow-y-auto p-2 custom-scrollbar">
+                <div className="text-[10px] uppercase font-black text-[rgb(var(--text-secondary))] mb-4 px-2 tracking-widest">Project Explorer</div>
                 {fileTree.map((item, i) => <FileTreeItem key={i} item={item} />)}
             </div>
 
             {/* Editor Area */}
             <div className="flex-1 flex flex-col min-w-0">
-                <div className="p-3 border-b border-white/5 bg-black/20 flex items-center justify-between">
+                <div className="p-3 border-b border-[rgb(var(--code-sidebar-border))] bg-[rgb(var(--bg-secondary)/0.3)] flex items-center justify-between">
                     <div className="flex items-center gap-2 overflow-hidden">
-                        <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded text-gray-500 font-bold uppercase tracking-tighter shrink-0">{selectedFile?.language || 'plain'}</span>
-                        <span className="text-xs text-white/70 truncate font-mono">{selectedFile?.path || 'Select a file'}</span>
+                        <span className="text-[10px] bg-[rgb(var(--bg-secondary)/0.5)] border border-[rgb(var(--border-primary)/0.5)] px-2 py-0.5 rounded text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter shrink-0">{selectedFile?.language || 'plain'}</span>
+                        <span className="text-xs text-[rgb(var(--text-primary)/0.7)] truncate font-mono">{selectedFile?.path || 'Select a file'}</span>
                     </div>
                 </div>
                 <div className="flex-1">
                     <Editor
                         height="100%"
-                        theme="vs-dark"
+                        theme={document.documentElement.classList.contains('dark') ? 'vs-dark' : 'vs-light'}
                         language={selectedFile?.language || 'plaintext'}
                         value={fileContent || ''}
                         options={{
                             readOnly: true,
                             minimap: { enabled: false },
                             fontSize: 13,
-                            fontFamily: "'Fira Code', 'Monaco', monospace",
+                            fontFamily: "var(--font-main)",
                             padding: { top: 16 },
                             scrollBeyondLastLine: false,
                             automaticLayout: true,
-                            backgroundColor: '#00000000'
+                            backgroundColor: 'transparent'
                         }}
                     />
                 </div>
@@ -258,6 +259,8 @@ const CodePreview = ({ projectId }) => {
         </div>
     );
 };
+
+
 
 export default function ProjectPage() {
     const { id } = useParams();
@@ -363,7 +366,7 @@ export default function ProjectPage() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <div className="text-2xl font-display text-cosmic-cyan animate-pulse">Loading project...</div>
+                <div className="text-2xl font-display text-[rgb(var(--color-primary))] animate-pulse">Loading project...</div>
             </div>
         );
     }
@@ -379,10 +382,10 @@ export default function ProjectPage() {
     return (
         <div className="min-h-screen p-4">
             {/* Header */}
-            <div className="glass-card p-6 mb-6">
+            <div className="glass-card p-6 mb-6 border-b border-[rgb(var(--color-brand-separator)/0.3)]">
                 <div className="flex justify-between items-start">
                     <div>
-                        <button onClick={() => navigate('/dashboard')} className="text-cosmic-cyan hover:text-cosmic-blue mb-4">
+                        <button onClick={() => navigate('/dashboard')} className="text-[rgb(var(--color-primary))] transition-transform hover:scale-110 mb-4 inline-block font-bold">
                             ← Back to Dashboard
                         </button>
                         <h1 className="text-3xl font-bold mb-2">{project.name || `Project #${project.id}`}</h1>
@@ -391,18 +394,18 @@ export default function ProjectPage() {
                         <div className="flex flex-wrap gap-3">
                             <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg flex items-center gap-2">
                                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Model</span>
-                                <span className="text-xs font-bold text-cosmic-cyan uppercase">{project.gemini_model?.replace('gemini-', '')}</span>
+                                <span className="text-xs font-bold text-[rgb(var(--color-primary))] uppercase">{project.gemini_model?.replace('gemini-', '')}</span>
                             </div>
                             <div className="px-3 py-1 bg-white/5 border border-white/10 rounded-lg flex items-center gap-2">
                                 <span className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">API Key</span>
-                                <span className="text-xs font-bold text-cosmic-blue uppercase">{project.api_key_name}</span>
+                                <span className="text-xs font-bold text-[rgb(var(--color-primary))] uppercase">{project.api_key_name}</span>
                             </div>
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className={`inline-block px-4 py-2 rounded-full mb-2 ${project.status === 'completed' ? 'bg-green-500/20 text-green-300' :
-                            project.status === 'failed' ? 'bg-red-500/20 text-red-300' :
-                                'bg-cosmic-cyan/20 text-cosmic-cyan animate-pulse'
+                        <div className={`inline-block px-4 py-2 rounded-full mb-2 ${project.status === 'completed' ? 'bg-[rgb(var(--status-success)/0.2)] text-[rgb(var(--status-success))]' :
+                            project.status === 'failed' ? 'bg-[rgb(var(--status-error)/0.2)] text-[rgb(var(--status-error))]' :
+                                'bg-[rgb(var(--status-info)/0.2)] text-[rgb(var(--status-info))] animate-pulse'
                             }`}>
                             {project.status === 'failed' && project.error_message?.includes('Cancelled') ? 'cancelled' : project.status}
                         </div>
@@ -418,7 +421,7 @@ export default function ProjectPage() {
                                         }
                                     }
                                 }}
-                                className="block w-full mt-2 px-4 py-2 rounded-lg bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-300 transition-colors border border-yellow-500/30 text-sm font-bold flex items-center justify-center gap-2"
+                                className="block w-full mt-2 px-4 py-2 rounded-lg bg-[rgb(var(--status-warning)/0.1)] transition-transform hover:scale-105 text-[rgb(var(--status-warning))] border border-[rgb(var(--status-warning)/0.3)] text-sm font-bold flex items-center justify-center gap-2"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -440,7 +443,7 @@ export default function ProjectPage() {
                                         state: { retryProject: project }
                                     });
                                 }}
-                                className="block w-full mt-2 px-4 py-2 rounded-lg bg-cosmic-cyan/20 hover:bg-cosmic-cyan/30 text-cosmic-cyan transition-colors border border-cosmic-cyan/30 text-sm font-bold flex items-center justify-center gap-2"
+                                className="block w-full mt-2 px-4 py-2 rounded-lg bg-[rgb(var(--bg-primary))] transition-transform hover:scale-105 text-[rgb(var(--color-primary))] border border-[rgb(var(--color-primary))] text-sm font-bold flex items-center justify-center gap-2"
                             >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -508,8 +511,8 @@ export default function ProjectPage() {
                                 return (
                                     <React.Fragment key={step.id}>
                                         <div className="flex flex-col items-center gap-3 relative z-10">
-                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all duration-500 border-2 ${isCompleted ? 'bg-cosmic-cyan/20 border-cosmic-cyan text-cosmic-cyan' :
-                                                isActive ? 'bg-cosmic-cyan border-white/20 text-space-900 animate-pulse' :
+                                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl transition-all duration-500 border-2 ${isCompleted ? 'bg-[rgb(var(--bg-primary))] border-[rgb(var(--color-primary))] text-[rgb(var(--color-primary))]' :
+                                                isActive ? 'bg-[rgb(var(--color-primary))] border-white/20 text-black animate-pulse' :
                                                     'bg-white/5 border-white/10 text-gray-600'
                                                 }`}>
                                                 {isCompleted ? (
@@ -518,7 +521,7 @@ export default function ProjectPage() {
                                                     </svg>
                                                 ) : step.icon}
                                             </div>
-                                            <div className={`text-xs font-bold uppercase tracking-tighter transition-colors duration-500 whitespace-nowrap ${isCompleted ? 'text-cosmic-cyan' : isActive ? 'text-white' : 'text-gray-600'
+                                            <div className={`text-xs font-bold uppercase tracking-tighter transition-colors duration-500 whitespace-nowrap ${isCompleted ? 'text-[rgb(var(--color-primary))]' : isActive ? 'text-[rgb(var(--text-primary))]' : 'text-[rgb(var(--text-secondary))]'
                                                 }`}>
                                                 {step.label}
                                             </div>
@@ -526,7 +529,7 @@ export default function ProjectPage() {
                                         {index < array.length - 1 && (
                                             <div className="flex-1 h-[2px] mx-4 -mt-8 relative overflow-hidden bg-black/10 dark:bg-white/5">
                                                 <div
-                                                    className="absolute inset-0 bg-cosmic-cyan transition-all duration-1000 origin-left"
+                                                    className="absolute inset-0 bg-[rgb(var(--color-primary))] transition-all duration-1000 origin-left"
                                                     style={{ transform: isCompleted ? 'scaleX(1)' : 'scaleX(0)' }}
                                                 />
                                             </div>
@@ -539,52 +542,17 @@ export default function ProjectPage() {
                 )}
             </div>
 
-            {/* Review Required Banner */}
-            {project.status === 'review_required' && (
-                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 mb-6">
-                    <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 shrink-0">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                            </svg>
-                        </div>
-                        <div className="flex-1">
-                            <h3 className="text-xl font-bold text-yellow-500 mb-1">Review Specification Required</h3>
-                            <p className="text-yellow-200/70 mb-4 max-w-2xl">
-                                {project.intent_spec?.explanation || "The intent prompt was vague. The system has made some intelligent assumptions to move forward. Please review and edit the specification below before proceeding with code generation."}
-                            </p>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={handleConfirmSpec}
-                                    className="px-6 py-2 bg-yellow-500 text-space-900 font-bold rounded-lg hover:bg-yellow-400 transition-colors"
-                                >
-                                    Confirm & Generate
-                                </button>
-                                <button
-                                    onClick={() => {
-                                        setActiveTab('intent-spec');
-                                        setIsEditing(true);
-                                    }}
-                                    className="px-6 py-2 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 transition-colors border border-white/10"
-                                >
-                                    Edit Spec
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Tabs */}
-            <div className="glass-card mb-6">
-                <div className="flex border-b border-black/10 dark:border-white/10">
+            <div className="bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] rounded-3xl mb-6">
+                <div className="flex border-b border-[rgb(var(--border-primary))]">
                     {['status', 'intent-spec', 'components', 'code'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
                             className={`px-6 py-4 font-medium transition-colors ${activeTab === tab
-                                ? 'border-b-2 border-cosmic-cyan text-cosmic-cyan'
-                                : 'text-gray-400 hover:text-white'
+                                ? 'border-b-2 border-[rgb(var(--color-primary))] text-[rgb(var(--color-primary))]'
+                                : 'text-[rgb(var(--text-secondary))] transition-transform hover:scale-110'
                                 }`}
                         >
                             {tab.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
@@ -595,55 +563,90 @@ export default function ProjectPage() {
 
             {/* Tab Content */}
             <div className="glass-card p-6">
+                {/* Review Required Integrated Banner */}
+                {project.status === 'review_required' && (
+                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 mb-8">
+                        <div className="flex items-start gap-4">
+                            <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 shrink-0">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="text-xl font-bold text-yellow-500 mb-1">Review Specification Required</h3>
+                                <p className="text-yellow-200/70 mb-4 max-w-2xl text-sm">
+                                    {project.intent_spec?.explanation || "The intent prompt was vague. The system has made some intelligent assumptions to move forward. Please review and edit the specification below before proceeding with code generation."}
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={handleConfirmSpec}
+                                        className="px-6 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 transition-colors"
+                                    >
+                                        Confirm & Generate
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setActiveTab('intent-spec');
+                                            setIsEditing(true);
+                                        }}
+                                        className="px-6 py-2 bg-[rgb(var(--bg-secondary)/0.5)] text-[rgb(var(--text-primary))] font-bold rounded-lg transition-transform hover:scale-105 border border-[rgb(var(--border-primary))]"
+                                    >
+                                        Edit Spec
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
                 {activeTab === 'status' && (
                     <div className="space-y-4">
-                        <h2 className="text-2xl font-bold mb-4">Pipeline Status</h2>
+                        <h2 className="text-subtitle font-bold mb-4">Pipeline Status</h2>
 
                         {project.error_message && (
-                            <div className="bg-red-500/20 border border-red-500/50 text-red-200 px-4 py-3 rounded-lg">
+                            <div className="bg-[rgb(var(--status-error)/0.1)] border border-[rgb(var(--status-error)/0.3)] text-[rgb(var(--status-error))] px-4 py-3 rounded-lg">
                                 <strong>Error:</strong> {project.error_message}
                             </div>
                         )}
 
                         <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white/5 p-6 rounded-2xl border border-white/5">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[rgb(var(--bg-secondary)/0.5)] p-6 rounded-2xl border border-[rgb(var(--border-primary))]">
                                 <div className="space-y-3">
                                     <p className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Project Status</span>
-                                        <span className="font-bold text-cosmic-cyan uppercase">{project.status}</span>
+                                        <span className="text-label">Project Status</span>
+                                        <span className="badge-info">{project.status}</span>
                                     </p>
                                     <p className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Current Stage</span>
-                                        <span className="text-white font-medium">{project.current_stage || 'N/A'}</span>
+                                        <span className="text-label">Current Stage</span>
+                                        <span className="text-[rgb(var(--text-primary))] font-medium">{project.current_stage || 'N/A'}</span>
                                     </p>
                                     <p className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Build Progress</span>
-                                        <span className="text-white font-black">{project.progress}%</span>
+                                        <span className="text-label">Build Progress</span>
+                                        <span className="text-[rgb(var(--text-primary))] font-black">{project.progress}%</span>
                                     </p>
                                 </div>
                                 <div className="space-y-3">
                                     <p className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">LLM Model</span>
-                                        <span className="text-cosmic-cyan font-black uppercase text-[11px]">{project.gemini_model || 'System Default'}</span>
+                                        <span className="text-label">LLM Model</span>
+                                        <span className="text-[rgb(var(--color-primary))] font-black uppercase text-[11px]">{project.gemini_model || 'System Default'}</span>
                                     </p>
                                     <p className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">API Key Used</span>
-                                        <span className="text-cosmic-blue font-black uppercase text-[11px]">{project.api_key_name || 'N/A'}</span>
+                                        <span className="text-label">API Key Used</span>
+                                        <span className="text-[rgb(var(--color-primary))] font-black uppercase text-[11px]">{project.api_key_name || 'N/A'}</span>
                                     </p>
                                     <p className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Started At</span>
-                                        <span className="text-gray-300 font-medium text-[11px]">{new Date(project.created_at).toLocaleString()}</span>
+                                        <span className="text-label">Started At</span>
+                                        <span className="text-[rgb(var(--text-primary))] font-medium text-[11px]">{new Date(project.created_at).toLocaleString()}</span>
                                     </p>
                                     {project.completed_at && (
                                         <p className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Finished At</span>
-                                            <span className="text-green-400 font-medium text-[11px]">{new Date(project.completed_at).toLocaleString()}</span>
+                                            <span className="text-label">Finished At</span>
+                                            <span className="badge-success">{new Date(project.completed_at).toLocaleString()}</span>
                                         </p>
                                     )}
                                     {project.completed_at && (
-                                        <p className="flex justify-between items-center text-sm pt-2 border-t border-white/5">
-                                            <span className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Total Duration</span>
-                                            <span className="text-cosmic-cyan font-black text-xs">{getDuration()}</span>
+                                        <p className="flex justify-between items-center text-sm pt-2 border-t border-[rgb(var(--border-primary))]">
+                                            <span className="text-[rgb(var(--text-secondary))] font-bold uppercase tracking-widest text-[10px]">Total Duration</span>
+                                            <span className="text-[rgb(var(--color-primary))] font-black text-xs">{getDuration()}</span>
                                         </p>
                                     )}
                                 </div>
@@ -660,8 +663,8 @@ export default function ProjectPage() {
                                 <button
                                     onClick={() => setIsEditing(!isEditing)}
                                     className={`px-4 py-2 rounded-lg font-bold transition-all border ${isEditing
-                                        ? 'bg-red-500/20 border-red-500/50 text-red-300'
-                                        : 'bg-cosmic-cyan/20 border-cosmic-cyan/50 text-cosmic-cyan'
+                                        ? 'bg-[rgb(var(--status-error)/0.1)] border-[rgb(var(--status-error)/0.3)] text-[rgb(var(--status-error))]'
+                                        : 'bg-[rgb(var(--status-info)/0.1)] border-[rgb(var(--status-info)/0.3)] text-[rgb(var(--status-info))]'
                                         }`}
                                 >
                                     {isEditing ? 'Cancel Editing' : 'Edit Specification'}
@@ -669,7 +672,7 @@ export default function ProjectPage() {
                                 {isEditing && (
                                     <button
                                         onClick={handleUpdateSpec}
-                                        className="px-4 py-2 bg-cosmic-cyan text-space-900 font-bold rounded-lg hover:bg-cosmic-cyan/80 transition-all"
+                                        className="px-4 py-2 bg-[rgb(var(--color-primary))] text-black font-bold rounded-lg hover:opacity-80 transition-all"
                                     >
                                         Save Changes
                                     </button>
@@ -678,65 +681,57 @@ export default function ProjectPage() {
                         </div>
 
                         {!project.intent_spec && !isEditing ? (
-                            <p className="text-gray-400">Intent spec not yet generated</p>
+                            <p className="text-[rgb(var(--text-secondary))]">Intent spec not yet generated</p>
                         ) : isEditing ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {/* Form Column 1: Stack & Features */}
                                 <div className="space-y-6">
-                                    <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                                    <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))]">
                                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                            <svg className="w-5 h-5 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-5 h-5 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                                             </svg>
                                             Technology Stack
                                         </h3>
-                                        <div className="grid grid-cols-1 gap-4">
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Backend</label>
-                                                <select
-                                                    value={editSpec?.stack?.backend || 'none'}
-                                                    onChange={e => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, backend: e.target.value === 'none' ? null : e.target.value } })}
-                                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-white focus:outline-none focus:border-cosmic-cyan"
-                                                >
-                                                    <option value="none">None/Custom</option>
-                                                    <option value="fastapi">FastAPI (Python)</option>
-                                                    <option value="django">Django (Python)</option>
-                                                    <option value="express">Express (Node.js)</option>
-                                                    <option value="springboot">Spring Boot (Java)</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Frontend</label>
-                                                <select
-                                                    value={editSpec?.stack?.frontend || 'none'}
-                                                    onChange={e => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, frontend: e.target.value === 'none' ? null : e.target.value } })}
-                                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-white focus:outline-none focus:border-cosmic-cyan"
-                                                >
-                                                    <option value="none">None/API Only</option>
-                                                    <option value="react">React (Vite)</option>
-                                                    <option value="vue">Vue (Vite)</option>
-                                                    <option value="nextjs">Next.js</option>
-                                                </select>
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-bold uppercase text-gray-400 mb-1">Database</label>
-                                                <select
-                                                    value={editSpec?.stack?.database || 'none'}
-                                                    onChange={e => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, database: e.target.value === 'none' ? null : e.target.value } })}
-                                                    className="w-full bg-black/50 border border-white/10 rounded-lg p-2 text-white focus:outline-none focus:border-cosmic-cyan"
-                                                >
-                                                    <option value="none">None</option>
-                                                    <option value="sqlite">SQLite</option>
-                                                    <option value="postgres">PostgreSQL</option>
-                                                    <option value="mongodb">MongoDB</option>
-                                                </select>
-                                            </div>
-                                        </div>
+                                        <CustomSelect
+                                            label="Backend"
+                                            options={[
+                                                { value: 'none', label: 'None/Custom' },
+                                                { value: 'fastapi', label: 'FastAPI (Python)' },
+                                                { value: 'django', label: 'Django (Python)' },
+                                                { value: 'express', label: 'Express (Node.js)' },
+                                                { value: 'springboot', label: 'Spring Boot (Java)' },
+                                            ]}
+                                            value={editSpec?.stack?.backend || 'none'}
+                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, backend: val === 'none' ? null : val } })}
+                                        />
+                                        <CustomSelect
+                                            label="Frontend"
+                                            options={[
+                                                { value: 'none', label: 'None/API Only' },
+                                                { value: 'react', label: 'React (Vite)' },
+                                                { value: 'vue', label: 'Vue (Vite)' },
+                                                { value: 'nextjs', label: 'Next.js' },
+                                            ]}
+                                            value={editSpec?.stack?.frontend || 'none'}
+                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, frontend: val === 'none' ? null : val } })}
+                                        />
+                                        <CustomSelect
+                                            label="Database"
+                                            options={[
+                                                { value: 'none', label: 'None' },
+                                                { value: 'sqlite', label: 'SQLite' },
+                                                { value: 'postgres', label: 'PostgreSQL' },
+                                                { value: 'mongodb', label: 'MongoDB' },
+                                            ]}
+                                            value={editSpec?.stack?.database || 'none'}
+                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, database: val === 'none' ? null : val } })}
+                                        />
                                     </div>
 
-                                    <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                                    <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))]">
                                         <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                            <svg className="w-5 h-5 text-cosmic-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-5 h-5 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" />
                                             </svg>
                                             System Features
@@ -753,8 +748,8 @@ export default function ProjectPage() {
                                                         setEditSpec({ ...editSpec, features });
                                                     }}
                                                     className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${editSpec.features.includes(feature)
-                                                        ? 'bg-cosmic-blue/20 border-cosmic-blue text-cosmic-blue'
-                                                        : 'bg-white/5 border-white/10 text-gray-500'
+                                                        ? 'bg-[rgb(var(--color-primary))]/20 border-[rgb(var(--color-primary))] text-[rgb(var(--color-primary))]'
+                                                        : 'bg-[rgb(var(--bg-secondary)/0.5)] border-[rgb(var(--border-primary))] text-[rgb(var(--text-secondary))]'
                                                         }`}
                                                 >
                                                     {feature.replace(/_/g, ' ')}
@@ -764,7 +759,7 @@ export default function ProjectPage() {
                                                 <input
                                                     type="text"
                                                     placeholder="Add custom feature..."
-                                                    className="flex-1 bg-black/50 border border-white/10 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-cosmic-blue"
+                                                    className="flex-1 bg-[rgb(var(--bg-primary)/0.5)] border border-[rgb(var(--border-primary))] rounded-lg p-2 text-sm text-[rgb(var(--text-primary))] focus:outline-none focus:border-[rgb(var(--color-primary))]"
                                                     onKeyDown={e => {
                                                         if (e.key === 'Enter' && e.target.value.trim()) {
                                                             const newFeature = e.target.value.trim().toLowerCase().replace(/\s+/g, '_');
@@ -781,10 +776,10 @@ export default function ProjectPage() {
                                 </div>
 
                                 {/* Form Column 2: Data Entities */}
-                                <div className="p-6 bg-white/5 rounded-2xl border border-white/10 h-fit">
+                                <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] h-fit">
                                     <h3 className="text-xl font-bold mb-4 flex items-center justify-between">
                                         <div className="flex items-center gap-2">
-                                            <svg className="w-5 h-5 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-5 h-5 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2 2 2 2 2h12c2 0 2-2 2-2V7c0-2-2-2-2-2H6c-2 0-2 2-2 2zm0 5h16" />
                                             </svg>
                                             Data Entities
@@ -794,20 +789,20 @@ export default function ProjectPage() {
                                                 ...editSpec,
                                                 data_entities: [...editSpec.data_entities, { name: 'NewEntity', fields: ['id', 'name'] }]
                                             })}
-                                            className="text-xs bg-cosmic-cyan text-space-900 px-2 py-1 rounded font-bold"
+                                            className="text-xs bg-[rgb(var(--color-primary))] text-[rgb(var(--bg-primary))] px-2 py-1 rounded font-bold"
                                         >
                                             + Add Entity
                                         </button>
                                     </h3>
                                     <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                         {editSpec?.data_entities?.map((entity, idx) => (
-                                            <div key={idx} className="p-4 bg-black/30 rounded-xl border border-white/5 relative group">
+                                            <div key={idx} className="p-4 bg-[rgb(var(--bg-primary)/0.3)] rounded-xl border border-[rgb(var(--border-primary)/0.5)] relative group">
                                                 <button
                                                     onClick={() => setEditSpec({
                                                         ...editSpec,
                                                         data_entities: editSpec.data_entities.filter((_, i) => i !== idx)
                                                     })}
-                                                    className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-2 right-2 text-[rgb(var(--status-error))] opacity-0 group-hover:opacity-100 transition-opacity"
                                                 >
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
@@ -821,11 +816,11 @@ export default function ProjectPage() {
                                                         newEntities[idx].name = e.target.value;
                                                         setEditSpec({ ...editSpec, data_entities: newEntities });
                                                     }}
-                                                    className="bg-transparent text-cosmic-cyan font-bold border-b border-white/10 mb-2 focus:outline-none focus:border-cosmic-cyan"
+                                                    className="bg-transparent text-[rgb(var(--color-primary))] font-bold border-b border-[rgb(var(--border-primary))] mb-2 focus:outline-none focus:border-[rgb(var(--color-primary))]"
                                                 />
                                                 <div className="flex flex-wrap gap-1 mb-3">
                                                     {entity.fields.map((field, fIdx) => (
-                                                        <span key={fIdx} className="group/tag inline-flex items-center gap-1 px-2 py-0.5 bg-cosmic-cyan/10 border border-cosmic-cyan/30 text-cosmic-cyan text-[10px] font-bold rounded-full">
+                                                        <span key={fIdx} className="group/tag inline-flex items-center gap-1 px-2 py-0.5 bg-[rgb(var(--bg-primary))] border border-[rgb(var(--color-primary))] text-[rgb(var(--color-primary))] text-[10px] font-bold rounded-full">
                                                             {field}
                                                             <button
                                                                 onClick={() => {
@@ -845,7 +840,7 @@ export default function ProjectPage() {
                                                 <input
                                                     type="text"
                                                     placeholder="Add field..."
-                                                    className="w-full bg-black/20 border border-white/5 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-cosmic-cyan"
+                                                    className="w-full bg-black/20 border border-white/5 rounded-lg p-2 text-xs text-[rgb(var(--text-primary))] focus:outline-none focus:border-[rgb(var(--color-primary))]"
                                                     onKeyDown={e => {
                                                         if (e.key === 'Enter' && e.target.value.trim()) {
                                                             const newField = e.target.value.trim();
@@ -866,50 +861,50 @@ export default function ProjectPage() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {/* Visual Grid Overview */}
-                                <div className="p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-cosmic-cyan/30 transition-colors">
-                                    <div className="text-xs font-bold text-cosmic-cyan uppercase tracking-widest mb-4">Architecture Stack</div>
+                                <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] hover:border-[rgb(var(--color-primary)/0.3)] transition-colors">
+                                    <div className="badge-gold mb-4 w-fit">Architecture Stack</div>
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
-                                            <span className="text-gray-500">Backend</span>
-                                            <span className="font-bold text-white">{project.intent_spec.stack.backend || 'None'}</span>
+                                            <span className="text-[rgb(var(--text-secondary))]">Backend</span>
+                                            <span className="font-bold text-[rgb(var(--text-primary))]">{project.intent_spec.stack.backend || 'None'}</span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-gray-500">Frontend</span>
-                                            <span className="font-bold text-white">{project.intent_spec.stack.frontend || 'None'}</span>
+                                            <span className="text-[rgb(var(--text-secondary))]">Frontend</span>
+                                            <span className="font-bold text-[rgb(var(--text-primary))]">{project.intent_spec.stack.frontend || 'None'}</span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-gray-500">Database</span>
-                                            <span className="font-bold text-white">{project.intent_spec.stack.database || 'None'}</span>
+                                            <span className="text-[rgb(var(--text-secondary))]">Database</span>
+                                            <span className="font-bold text-[rgb(var(--text-primary))]">{project.intent_spec.stack.database || 'None'}</span>
                                         </div>
                                         <div className="flex items-center justify-between">
-                                            <span className="text-gray-500">Type</span>
-                                            <span className="font-bold text-white">{project.intent_spec.project_type}</span>
+                                            <span className="text-[rgb(var(--text-secondary))]">Type</span>
+                                            <span className="font-bold text-[rgb(var(--text-primary))]">{project.intent_spec.project_type}</span>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-cosmic-blue/30 transition-colors">
-                                    <div className="text-xs font-bold text-cosmic-blue uppercase tracking-widest mb-4">Derived Features</div>
+                                <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] hover:border-[rgb(var(--color-primary))]/30 transition-colors">
+                                    <div className="text-xs font-bold text-[rgb(var(--color-primary))] uppercase tracking-widest mb-4">Derived Features</div>
                                     <div className="flex flex-wrap gap-2">
                                         {project.intent_spec.features.map((f, i) => (
-                                            <span key={i} className="px-3 py-1 bg-cosmic-blue/10 border border-cosmic-blue/30 text-cosmic-blue text-[10px] font-bold uppercase rounded-full">
+                                            <span key={i} className="px-3 py-1 bg-[rgb(var(--bg-primary))] border border-[rgb(var(--color-secondary))] text-[rgb(var(--color-secondary))] text-[10px] font-bold uppercase rounded-full">
                                                 {f}
                                             </span>
                                         ))}
                                     </div>
                                 </div>
 
-                                <div className="p-6 bg-white/5 rounded-2xl border border-white/10 hover:border-white/20 transition-colors">
-                                    <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Core Data Models</div>
+                                <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-primary)/2)] transition-colors">
+                                    <div className="text-xs font-bold text-[rgb(var(--text-secondary))] uppercase tracking-widest mb-4">Core Data Models</div>
                                     <div className="space-y-3">
                                         {project.intent_spec.data_entities.slice(0, 4).map((entity, i) => (
                                             <div key={i} className="flex flex-col">
-                                                <span className="font-bold text-sm text-white">{entity.name}</span>
-                                                <span className="text-[10px] text-gray-500 truncate">{entity.fields.join(', ')}</span>
+                                                <span className="font-bold text-sm text-[rgb(var(--text-primary))]">{entity.name}</span>
+                                                <span className="text-[10px] text-[rgb(var(--text-secondary))] truncate">{entity.fields.join(', ')}</span>
                                             </div>
                                         ))}
                                         {project.intent_spec.data_entities.length > 4 && (
-                                            <div className="text-[10px] text-cosmic-cyan font-bold italic">
+                                            <div className="text-[10px] text-[rgb(var(--color-primary))] font-bold italic">
                                                 + {project.intent_spec.data_entities.length - 4} more entities
                                             </div>
                                         )}
@@ -928,7 +923,7 @@ export default function ProjectPage() {
                         {project.component_plan ? (
                             <DependencyGraph components={project.component_plan.components} />
                         ) : (
-                            <p className="text-gray-400">Architecture plan not yet generated</p>
+                            <p className="text-body text-[rgb(var(--text-secondary))]">Architecture plan not yet generated</p>
                         )}
                     </div>
                 )}
@@ -936,7 +931,7 @@ export default function ProjectPage() {
                 {activeTab === 'code' && (
                     <div className="animate-fade-in">
                         <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-2xl font-bold">Generated Source</h2>
+                            <h2 className="text-subtitle">Generated Source</h2>
                         </div>
                         <CodePreview projectId={id} />
                     </div>

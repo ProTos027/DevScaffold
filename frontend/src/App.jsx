@@ -14,7 +14,7 @@ const PrivateRoute = ({ children }) => {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center border-none">
-                <div className="text-2xl font-display text-cosmic-cyan animate-pulse">Initializing...</div>
+                <div className="text-2xl font-display text-[rgb(var(--color-primary))] animate-pulse">Initializing...</div>
             </div>
         );
     }
