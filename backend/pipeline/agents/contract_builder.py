@@ -44,7 +44,7 @@ def build_component_plan(spec: IntentSpecSchema, model_name: str, api_key: str) 
     
     # Model name mapping
     if not model_name.startswith("gemini-"):
-        model_name = f"gemini-1.5-flash"
+        model_name = f"gemini-2.5-flash"
         
     # Convert spec to JSON string for prompt
     spec_json = spec.model_dump_json(indent=2)

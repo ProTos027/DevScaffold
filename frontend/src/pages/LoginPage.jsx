@@ -223,7 +223,10 @@ export default function AuthDrawer({ isOpen, onClose }) {
                         </div>
                     </div>
                     <button
-                        onClick={() => window.location.href = 'http://localhost:8000/accounts/github/login/?process=login'}
+                        onClick={() => {
+                            const theme = localStorage.getItem('theme') || 'dark';
+                            window.location.href = `http://localhost:8000/accounts/github/login/?process=login&theme=${theme}`;
+                        }}
                         className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[rgb(var(--bg-primary))] transition-transform hover:scale-[1.02] text-[rgb(var(--text-primary))] border border-[rgb(var(--border-primary))] shadow-sm"
                     >
                         <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">

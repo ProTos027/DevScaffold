@@ -20,7 +20,7 @@ def generate_custom_boilerplate(
     client = genai.Client(api_key=api_key)
     
     if not gemini_model.startswith("gemini-"):
-        gemini_model = "gemini-1.5-flash"
+        gemini_model = "gemini-2.5-flash"
         
     backend = (intent_spec.stack.get('backend')).lower()
     database = intent_spec.stack.get('database', 'sqlite')

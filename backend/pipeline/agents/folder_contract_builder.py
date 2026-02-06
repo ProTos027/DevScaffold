@@ -44,7 +44,7 @@ def build_folder_contracts(
     client = genai.Client(api_key=api_key)
     
     if not model_name.startswith("gemini-"):
-        model_name = "gemini-1.5-flash"
+        model_name = "gemini-2.5-flash"
 
     prompt = f"""
     Framework: {intent_spec.stack.get('backend')}

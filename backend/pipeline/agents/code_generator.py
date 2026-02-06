@@ -26,7 +26,7 @@ def generate_files_with_gemini(
     client = genai.Client(api_key=api_key)
     
     if not model_name.startswith("gemini-"):
-        model_name = "gemini-1.5-flash"
+        model_name = "gemini-2.5-flash"
     
     # UNIVERSAL GENERATION: Generate framework boilerplate
     from .universal_generator import universal_generate

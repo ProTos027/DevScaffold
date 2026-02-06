@@ -402,10 +402,11 @@ export default function DashboardPage() {
                                     <CustomSelect
                                         label="Model"
                                         options={[
-                                            { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash (Optimized)' },
-                                            { value: 'gemini-2.5-pro', label: 'Gemini 2 Pro (Superior Reasoning)' },
-                                            { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro (Stability)' },
-                                            { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash (Latency)' },
+                                            { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro' },
+                                            { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash' },
+                                            { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+                                            { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+                                            { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash-Lite' },
                                         ]}
                                         value={geminiModel}
                                         onChange={setGeminiModel}

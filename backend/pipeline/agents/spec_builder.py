@@ -36,7 +36,7 @@ def build_spec_from_prompt(prompt: str, model_name: str, api_key: str) -> Intent
     client = genai.Client(api_key=api_key)
     
     if not model_name.startswith("gemini-"):
-        model_name = f"gemini-1.5-flash"
+        model_name = f"gemini-2.5-flash"
 
     try:
         print(f"DEBUG: spec_builder.py - User Prompt: {prompt[:200]}...")
