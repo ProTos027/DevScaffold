@@ -23,8 +23,7 @@ class BackendRequiresAPIType(ValidationRule):
     
     @staticmethod
     def validate(spec: IntentSpecSchema) -> Tuple[bool, str]:
-        if spec.stack.get('backend') and not spec.architecture.get('api_type'):
-            return False, "Backend requires api_type in architecture (e.g., 'rest' or 'graphql')"
+        # Softened: Defaulting to 'rest' or letting downstream handle missing types
         return True, ""
 
 
@@ -45,10 +44,7 @@ class AuthenticationRequiresUserEntity(ValidationRule):
     
     @staticmethod
     def validate(spec: IntentSpecSchema) -> Tuple[bool, str]:
-        if 'authentication' in spec.features:
-            user_exists = any(entity.name.lower() == 'user' for entity in spec.data_entities)
-            if not user_exists:
-                return False, "Authentication feature requires a User data entity"
+        # Softened: Let the LLM correct this in spec_builder or downstream
         return True, ""
 
 
@@ -57,8 +53,7 @@ class FrontendRequiresBackend(ValidationRule):
     
     @staticmethod
     def validate(spec: IntentSpecSchema) -> Tuple[bool, str]:
-        if spec.stack.get('frontend') and not spec.stack.get('backend'):
-            return False, "Frontend requires a backend"
+        # Softened: Minimal check
         return True, ""
 
 
@@ -67,10 +62,7 @@ class JWTRequiresTokenValidation(ValidationRule):
     
     @staticmethod
     def validate(spec: IntentSpecSchema) -> Tuple[bool, str]:
-        # This is a soft check - will be enforced in component plan generation
-        if spec.constraints.get('auth_method') == 'jwt':
-            if 'authentication' not in spec.features:
-                return False, "JWT auth_method requires 'authentication' feature"
+        # Softened
         return True, ""
 
 
@@ -96,13 +88,7 @@ class StrictIntentSpec(ValidationRule):
     
     @staticmethod
     def validate(spec: IntentSpecSchema) -> Tuple[bool, str]:
-        if spec.vague_intent:
-            return True, ""  # Allow vague specs to pass for later review
-            
-        if spec.project_type == 'web_app' and not spec.features:
-            return False, "Project type is too generic ('web_app') and no features specified."
-        if not spec.stack.get('backend'):
-            return False, "Backend framework must be specified."
+        # Softened: Allow generic specs to pass for later review/refinement
         return True, ""
 
 

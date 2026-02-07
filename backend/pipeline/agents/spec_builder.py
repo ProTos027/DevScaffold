@@ -19,8 +19,10 @@ RESILIENCE & BEST-GUESS DIRECTIVES:
 4. LITERALISM vs. INTELLIGENCE: While you should be literal for specific requests (e.g., "Postgres only"), you must be intelligent for vague ones. 
 5. NO HALLUCINATION: Only add data entities if they are logically required (e.g., 'User' for auth).
 6. ALWAYS SPECIFY API TYPE: In `architecture`, always include `api_type`. Default to "rest" if not specified.
-7. AUTH CONSISTENCY: If you set `auth_method` to "jwt" in `constraints`, you MUST include "authentication" in the `features` list.
-8. FRAMEWORK MAPPING:
+7. AUTH CONSISTENCY: If you include "authentication" in `features`, you MUST add a "User" entity to `data_entities`.
+8. JWT REQUIREMENT: If you set `auth_method` to "jwt" in `constraints`, you MUST include "authentication" in `features`.
+9. COMPATIBILITY: If a frontend is requested, you MUST provide a backend. 
+10. FRAMEWORK MAPPING:
    - "Spring Boot", "Java Spring", "Java" -> backend: "springboot"
    - "FastAPI", "fast api" -> backend: "fastapi"
    - "Express", "Node" -> backend: "express"
