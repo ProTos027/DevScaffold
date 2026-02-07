@@ -74,4 +74,7 @@ def build_component_plan(spec: IntentSpecSchema, model_name: str, api_key: str) 
         return plan
         
     except Exception as e:
-        raise ValueError(f"Failed to generate Component Plan from spec: {e}")
+        from ..utils import format_gemini_error
+        clean_msg = format_gemini_error(e)
+        print(f"❌ CONTRACT BUILDER ERROR: {clean_msg}")
+        raise ValueError(clean_msg)

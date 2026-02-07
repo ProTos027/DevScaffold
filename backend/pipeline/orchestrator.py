@@ -2,7 +2,7 @@
 Main LangGraph orchestrator for the DevScaffold pipeline.
 Coordinates all agents in the correct sequence.
 """
-from typing import Dict, Any
+from typing import Any
 import traceback
 
 from projects.models import Project, IntentSpec, ComponentPlan, DependencyGraph, ValidationError as ValidationErrorModel
@@ -137,10 +137,10 @@ class PipelineOrchestrator:
                 self.api_key
             )
             
-            # Save Component Plan
-            ComponentPlan.objects.create(
+            # Save ComponentPlan (Idempotent)
+            ComponentPlan.objects.update_or_create(
                 project=self.project,
-                components=[c.model_dump() for c in component_plan.components]
+                defaults={'components': [c.model_dump() for c in component_plan.components]}
             )
             
             # Stage 4: Build Dependency Graph
@@ -151,12 +151,14 @@ class PipelineOrchestrator:
                 self.project.mark_failed(str(e))
                 return False
             
-            # Save Dependency Graph
-            DependencyGraph.objects.create(
+            # Save Dependency Graph (Idempotent)
+            DependencyGraph.objects.update_or_create(
                 project=self.project,
-                nodes=dep_graph.nodes,
-                edges=[e.model_dump() if hasattr(e, 'model_dump') else e for e in dep_graph.edges],
-                build_order=topological_sort_from_graph(dep_graph)
+                defaults={
+                    'nodes': dep_graph.nodes,
+                    'edges': [e.model_dump() if hasattr(e, 'model_dump') else e for e in dep_graph.edges],
+                    'build_order': topological_sort_from_graph(dep_graph)
+                }
             )
             
             # Stage 5: Build Folder Contracts
@@ -212,11 +214,24 @@ class PipelineOrchestrator:
             return True
             
         except Exception as e:
-            error_str = str(e)
-            if "429" in error_str or "resource exhausted" in error_str.lower() or "quota exhausted" in error_str.lower():
-                error_msg = "api key resource exhausted"
+            from .utils import format_gemini_error
+            clean_msg = format_gemini_error(e)
+            
+            # Additional context mapping (optional, clean_msg might already handle 503/429)
+            error_str = str(e).lower()
+            if "status: completed" in error_str: # Special case for already finished projects
+                error_msg = clean_msg
+            elif "429" in error_str or "quota" in error_str:
+                error_msg = f"API Quota Exhausted: {clean_msg}"
+            elif "503" in error_str:
+                error_msg = f"Gemini Overloaded: {clean_msg}"
             else:
-                error_msg = f"{type(e).__name__}: {error_str}\n{traceback.format_exc()}"
+                error_msg = clean_msg
+            
+            print(f"❌ PIPELINE FAILURE: {error_msg}")
+            # Log the full traceback for debugging but don't show to user in mark_failed
+            import logging
+            logging.error(f"Pipeline error: {traceback.format_exc()}")
             
             self.project.mark_failed(error_msg)
             return False

@@ -40,8 +40,19 @@ def assemble_repository(project, intent_spec: IntentSpecSchema, generated_files:
         # Place framework boilerplate files first
         if '_boilerplate' in generated_files:
             for filepath, content in generated_files['_boilerplate'].items():
-                # Handle nested paths like app/config.py
-                file_path = backend_dir / filepath
+                # Detect if file belongs in frontend (starts with frontend/)
+                if filepath.startswith('frontend/'):
+                    file_path = project_dir / filepath
+                elif filepath.startswith('backend/'):
+                    # Strip 'backend/' and place in backend_dir
+                    file_path = backend_dir / filepath.replace('backend/', '', 1)
+                else:
+                    # Default: Place in backend_dir (legacy behavior) OR root if it's a root file
+                    if filepath in ['README.md', '.gitignore', 'start.sh', 'start.ps1']:
+                        file_path = project_dir / filepath
+                    else:
+                        file_path = backend_dir / filepath
+                
                 file_path.parent.mkdir(parents=True, exist_ok=True)
                 file_path.write_text(content, encoding='utf-8')
         

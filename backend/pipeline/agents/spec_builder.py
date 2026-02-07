@@ -18,11 +18,13 @@ RESILIENCE & BEST-GUESS DIRECTIVES:
 3. ALWAYS PROVIDE A BACKEND: If no backend is mentioned, default to "fastapi" (it's our baseline).
 4. LITERALISM vs. INTELLIGENCE: While you should be literal for specific requests (e.g., "Postgres only"), you must be intelligent for vague ones. 
 5. NO HALLUCINATION: Only add data entities if they are logically required (e.g., 'User' for auth).
-6. FRAMEWORK MAPPING:
-   - "Spring Boot", "Java Spring", "Java" → backend: "springboot"
-   - "FastAPI", "fast api" → backend: "fastapi"
-   - "Express", "Node" → backend: "express"
-   - "Django" → backend: "django"
+6. ALWAYS SPECIFY API TYPE: In `architecture`, always include `api_type`. Default to "rest" if not specified.
+7. AUTH CONSISTENCY: If you set `auth_method` to "jwt" in `constraints`, you MUST include "authentication" in the `features` list.
+8. FRAMEWORK MAPPING:
+   - "Spring Boot", "Java Spring", "Java" -> backend: "springboot"
+   - "FastAPI", "fast api" -> backend: "fastapi"
+   - "Express", "Node" -> backend: "express"
+   - "Django" -> backend: "django"
 """
 
 
@@ -63,11 +65,7 @@ def build_spec_from_prompt(prompt: str, model_name: str, api_key: str) -> Intent
         return spec
         
     except Exception as e:
-        error_msg = str(e)
-        if "429" in error_msg or "quota" in error_msg.lower() or "exhausted" in error_msg.lower():
-            raise ValueError("Gemini API Quota Exhausted: This API key has hit its limit. Please select or add a different key in your vault.")
-            
-        print(f"❌ SPEC BUILDER ERROR: {e}")
-        import traceback
-        traceback.print_exc()
-        raise ValueError(f"Failed to generate Intent Spec: {e}")
+        from ..utils import format_gemini_error
+        clean_msg = format_gemini_error(e)
+        print(f"❌ SPEC BUILDER ERROR: {clean_msg}")
+        raise ValueError(clean_msg)

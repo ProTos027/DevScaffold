@@ -72,7 +72,9 @@ def build_folder_contracts(
         return FolderContractListSchema(**data)
         
     except Exception as e:
-        print(f"❌ FOLDER CONTRACT ERROR: {e}")
+        from ..utils import format_gemini_error
+        clean_msg = format_gemini_error(e)
+        print(f"❌ FOLDER CONTRACT ERROR: {clean_msg}")
         # Build minimal contracts manually if LLM fails
         contracts = []
         for comp in component_plan.components:

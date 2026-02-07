@@ -167,7 +167,7 @@ export default function DashboardPage() {
             {/* Sidebar Backdrop */}
             {isSidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-300"
+                    className="fixed inset-0 bg-black/60 z-40 transition-opacity duration-300"
                     onClick={() => setIsSidebarOpen(false)}
                 />
             )}
@@ -433,7 +433,7 @@ export default function DashboardPage() {
 
             {/* API Keys Modal */}
             {showAPIKeysModal && (
-                <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-[70]">
+                <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[70]">
                     <div className="glass-3 p-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-fade-in">
                         <div className="flex justify-between items-center mb-2">
                             <h2 className="text-3xl font-display font-bold">Secret <span className="text-gold-solid">Vault</span></h2>
@@ -443,7 +443,7 @@ export default function DashboardPage() {
                                 </svg>
                             </button>
                         </div>
-                        <p className="text-meta text-[rgb(var(--text-secondary))] mb-10">Multi-Provider Key Orchestration</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-secondary))] mb-10">Multi-Provider Key Orchestration</p>
 
                         {/* Add New Key Form */}
                         <div className="mb-10 p-8 bg-[rgb(var(--bg-secondary)/0.3)] rounded-3xl border border-[rgb(var(--border-primary))]">

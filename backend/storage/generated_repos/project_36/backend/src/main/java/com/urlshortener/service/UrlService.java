@@ -1,1 +1,0 @@
-package com.urlshortener.service;import com.urlshortener.model.Url;public interface UrlService {Url generateShortUrl(String longUrl);String getLongUrl(String shortCode);}

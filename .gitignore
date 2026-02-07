@@ -15,9 +15,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 db.sqlite3
-.backend/storage/generated_repos
-storage/generated_repos/*
-!storage/generated_repos/.gitkeep
+backend/storage/generated_repos/
+backend/storage/temp/
+backend/storage/*.zip
 
 # Frontend (Node/React)
 .next/
