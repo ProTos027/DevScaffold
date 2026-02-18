@@ -23,19 +23,26 @@ def generate_custom_boilerplate(
         gemini_model = "gemini-2.5-flash"
         
     backend = (intent_spec.stack.get('backend')).lower()
+    backend_version = intent_spec.stack.get('backend_version', '')
     database = intent_spec.stack.get('database', 'sqlite')
+    frontend = intent_spec.stack.get('frontend')
+    frontend_version = intent_spec.stack.get('frontend_version', '')
+    
+    version_ctx = f" v{backend_version}" if backend_version else ""
+    fe_version_ctx = f" v{frontend_version}" if frontend_version else ""
     
     system_instruction = f"""You are a software project scaffolding expert.
-Generate a complete, production-ready {backend} project boilerplate.
+Generate a complete, production-ready {backend}{version_ctx} project boilerplate.
 
 Requirements:
-- Follow {backend} best practices and conventions.
+- Follow {backend}{version_ctx} best practices and conventions.
 - Create proper directory structure and necessary configuration files.
 - Include database setup if needed.
 - Add basic error handling.
 - **CRITICAL: Startup scripts (start.ps1 for Windows, start.sh for Linux/Mac)**
    - These must run the correct command for {backend}.
    - Include environment setup (venv activation, npm install, etc.).
+{f'- IMPORTANT: Use {backend} version {backend_version} compatible syntax and dependencies.' if backend_version else ''}
 """
 
     components_info = [
@@ -44,12 +51,13 @@ Requirements:
     ]
     
     prompt = f"""
-Framework: {backend}
+Framework: {backend}{version_ctx}
 Project Type: {intent_spec.project_type}
 Complexity: {intent_spec.complexity}
 Database: {database}
 Features: {intent_spec.features}
 Components: {components_info}
+{f'Frontend: {frontend}{fe_version_ctx}' if frontend else ''}
 
 Generate:
 1. Entry point file.
@@ -57,7 +65,7 @@ Generate:
 3. Database connection setup.
 4. Directory structure files (package.json, pom.xml, etc.).
 5. .gitignore and README.md.
-6. Dependency files.
+6. Dependency files (with correct versions).
 7. Startup scripts (start.sh, start.ps1).
 """
 

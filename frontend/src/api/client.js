@@ -65,6 +65,7 @@ export const projectsAPI = {
     updateSpec: (id, spec) => api.put(`/projects/${id}/update_intent_spec/`, spec),
     browseFiles: (id) => api.get(`/projects/${id}/browse_files/`),
     readFile: (id, path) => api.get(`/projects/${id}/read_file/`, { params: { path } }),
+    getVersions: () => api.get('/projects/versions/'),
 };
 
 export const apiKeysAPI = {

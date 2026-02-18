@@ -27,6 +27,11 @@ RESILIENCE & BEST-GUESS DIRECTIVES:
    - "FastAPI", "fast api" -> backend: "fastapi"
    - "Express", "Node" -> backend: "express"
    - "Django" -> backend: "django"
+11. VERSION INFERENCE: If the user mentions a specific version (e.g., "Django 4.2", "React 19", "FastAPI 0.115"),
+    set it in the `stack` dict as `backend_version`, `frontend_version`, or `database_version`.
+    - "Django 4.2 todo app" -> stack: {backend: "django", backend_version: "4.2"}
+    - "React 19 dashboard" -> stack: {frontend: "react", frontend_version: "19.0.0"}
+    - If NO version is mentioned, do NOT include version keys — the system will use sensible defaults.
 """
 
 

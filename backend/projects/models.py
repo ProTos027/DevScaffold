@@ -298,3 +298,25 @@ class ValidationError(models.Model):
     
     def __str__(self):
         return f"{self.rule_name}: {self.error_message}"
+
+
+class PipelineActionLog(models.Model):
+    """
+    Tracks agent actions during pipeline execution.
+    Downstream agents read previous logs to maintain pipeline consistency.
+    """
+    
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='action_logs')
+    stage = models.CharField(max_length=50)        # e.g. 'spec_building', 'code_generation'
+    agent = models.CharField(max_length=50)         # e.g. 'spec_builder', 'code_generator'
+    action = models.CharField(max_length=100)       # e.g. 'generated_model', 'set_stack'
+    details = models.JSONField(default=dict)        # Freeform: {"component": "user_model", ...}
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['created_at']
+        verbose_name = 'Pipeline Action Log'
+        verbose_name_plural = 'Pipeline Action Logs'
+    
+    def __str__(self):
+        return f"[{self.stage}] {self.agent}: {self.action}"

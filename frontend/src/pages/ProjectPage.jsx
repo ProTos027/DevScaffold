@@ -19,6 +19,7 @@ export default function ProjectPage() {
     // Editing State
     const [isEditing, setIsEditing] = useState(false);
     const [editSpec, setEditSpec] = useState(null);
+    const [availableVersions, setAvailableVersions] = useState({});
 
     const getDuration = () => {
         if (!project?.completed_at) return null;
@@ -35,6 +36,18 @@ export default function ProjectPage() {
             setEditSpec(project.intent_spec);
         }
     }, [project?.intent_spec]);
+
+    useEffect(() => {
+        const fetchVersions = async () => {
+            try {
+                const { data } = await projectsAPI.getVersions();
+                setAvailableVersions(data);
+            } catch (e) {
+                console.error('Failed to fetch versions:', e);
+            }
+        };
+        fetchVersions();
+    }, []);
 
     useEffect(() => {
         fetchProject();
@@ -367,8 +380,32 @@ export default function ProjectPage() {
                                                 { value: 'springboot', label: 'Spring Boot (Java)' },
                                             ]}
                                             value={editSpec?.stack?.backend || 'none'}
-                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, backend: val === 'none' ? null : val } })}
+                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, backend: val === 'none' ? null : val, backend_version: null } })}
                                         />
+                                        {editSpec?.stack?.backend && availableVersions[editSpec.stack.backend] && (
+                                            <>
+                                                <CustomSelect
+                                                    label="Backend Version"
+                                                    options={[
+                                                        { value: 'latest', label: 'Latest (default)' },
+                                                        ...availableVersions[editSpec.stack.backend].map(v => ({ value: v, label: `v${v}` }))
+                                                    ]}
+                                                    value={editSpec?.stack?.backend_version || 'latest'}
+                                                    onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, backend_version: val === 'latest' ? null : val } })}
+                                                />
+                                                <p className="text-xs text-[rgb(var(--text-secondary))] mt-1 pl-1">
+                                                    {{
+                                                        django: editSpec?.stack?.backend_version?.startsWith('5') || !editSpec?.stack?.backend_version
+                                                            ? '⚡ Django 5.x requires Python 3.10+'
+                                                            : '⚡ Django 4.2 requires Python 3.8+',
+                                                        fastapi: '⚡ FastAPI requires Python 3.8+',
+                                                        flask: '⚡ Flask requires Python 3.8+',
+                                                        express: '⚡ Express requires Node.js 14+',
+                                                        springboot: '⚡ Spring Boot 3.x requires Java 17+',
+                                                    }[editSpec.stack.backend]}
+                                                </p>
+                                            </>
+                                        )}
                                         <CustomSelect
                                             label="Frontend"
                                             options={[
@@ -378,8 +415,28 @@ export default function ProjectPage() {
                                                 { value: 'nextjs', label: 'Next.js' },
                                             ]}
                                             value={editSpec?.stack?.frontend || 'none'}
-                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, frontend: val === 'none' ? null : val } })}
+                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, frontend: val === 'none' ? null : val, frontend_version: null } })}
                                         />
+                                        {editSpec?.stack?.frontend && editSpec.stack.frontend !== 'none' && availableVersions[editSpec.stack.frontend] && (
+                                            <>
+                                                <CustomSelect
+                                                    label="Frontend Version"
+                                                    options={[
+                                                        { value: 'latest', label: 'Latest (default)' },
+                                                        ...availableVersions[editSpec.stack.frontend].map(v => ({ value: v, label: `v${v}` }))
+                                                    ]}
+                                                    value={editSpec?.stack?.frontend_version || 'latest'}
+                                                    onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, frontend_version: val === 'latest' ? null : val } })}
+                                                />
+                                                <p className="text-xs text-[rgb(var(--text-secondary))] mt-1 pl-1">
+                                                    {{
+                                                        react: editSpec?.stack?.frontend_version?.startsWith('19') ? '⚡ React 19 requires Node.js 18+' : '⚡ React 18 requires Node.js 14+',
+                                                        vue: '⚡ Vue 3.x requires Node.js 16+',
+                                                        nextjs: editSpec?.stack?.frontend_version?.startsWith('15') ? '⚡ Next.js 15 requires Node.js 18.18+' : '⚡ Next.js requires Node.js 16.14+',
+                                                    }[editSpec.stack.frontend]}
+                                                </p>
+                                            </>
+                                        )}
                                         <CustomSelect
                                             label="Database"
                                             options={[
@@ -530,11 +587,17 @@ export default function ProjectPage() {
                                     <div className="space-y-4">
                                         <div className="flex items-center justify-between">
                                             <span className="text-[rgb(var(--text-secondary))]">Backend</span>
-                                            <span className="font-bold text-[rgb(var(--text-primary))]">{project.intent_spec.stack.backend || 'None'}</span>
+                                            <span className="font-bold text-[rgb(var(--text-primary))]">
+                                                {project.intent_spec.stack.backend || 'None'}
+                                                {project.intent_spec.stack.backend_version && <span className="text-[rgb(var(--color-primary))] ml-1">v{project.intent_spec.stack.backend_version}</span>}
+                                            </span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-[rgb(var(--text-secondary))]">Frontend</span>
-                                            <span className="font-bold text-[rgb(var(--text-primary))]">{project.intent_spec.stack.frontend || 'None'}</span>
+                                            <span className="font-bold text-[rgb(var(--text-primary))]">
+                                                {project.intent_spec.stack.frontend || 'None'}
+                                                {project.intent_spec.stack.frontend_version && <span className="text-[rgb(var(--color-primary))] ml-1">v{project.intent_spec.stack.frontend_version}</span>}
+                                            </span>
                                         </div>
                                         <div className="flex items-center justify-between">
                                             <span className="text-[rgb(var(--text-secondary))]">Database</span>
@@ -597,7 +660,7 @@ export default function ProjectPage() {
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-subtitle">Generated Source</h2>
                         </div>
-                        <CodePreview projectId={id} />
+                        <CodePreview projectId={id} status={project.status} error={project.error_message} />
                     </div>
                 )}
             </div>

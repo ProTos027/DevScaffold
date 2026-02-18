@@ -11,6 +11,67 @@ from django.conf import settings
 from pipeline.schemas import IntentSpecSchema
 
 
+# Default framework versions — used when user doesn't specify a version
+DEFAULT_VERSIONS = {
+    'django': {
+        'framework': '5.0.1',
+        'deps': {
+            'djangorestframework': '3.14.0',
+            'django-cors-headers': '4.3.1',
+            'python-decouple': '3.8',
+        }
+    },
+    'fastapi': {
+        'framework': '0.109.0',
+        'deps': {
+            'uvicorn': '0.27.0',
+            'pydantic': '2.5.3',
+            'python-decouple': '3.8',
+        }
+    },
+    'flask': {
+        'framework': '3.0.0',
+        'deps': {
+            'python-decouple': '3.8',
+        }
+    },
+    'react': {
+        'framework': '18.2.0',
+        'deps': {
+            'react-dom': '18.2.0',
+            'react-router-dom': '6.21.0',
+            'axios': '1.6.5',
+        }
+    },
+    'vue': {
+        'framework': '3.4.0',
+        'deps': {
+            'vue-router': '4.2.5',
+            'axios': '1.6.5',
+        }
+    },
+    'express': {
+        'framework': '4.18.2',
+        'deps': {
+            'cors': '2.8.5',
+            'dotenv': '16.3.1',
+        }
+    },
+}
+
+# Available versions for frontend dropdowns
+AVAILABLE_VERSIONS = {
+    'django': ['4.2', '5.0', '5.0.1', '5.1'],
+    'fastapi': ['0.100.0', '0.109.0', '0.115.0'],
+    'flask': ['2.3.0', '3.0.0'],
+    'express': ['4.18.2', '4.19.0', '5.0.0'],
+    'springboot': ['3.1.0', '3.2.0', '3.3.0'],
+    'react': ['17.0.2', '18.2.0', '18.3.0', '19.0.0'],
+    'vue': ['3.3.0', '3.4.0', '3.5.0'],
+    'nextjs': ['13.5.0', '14.0.0', '15.0.0'],
+}
+
+
 def assemble_repository(project, intent_spec: IntentSpecSchema, generated_files: Dict[str, Dict[str, str]]) -> Path:
     """
     Deterministically assemble the repository from generated files.
@@ -93,6 +154,8 @@ def assemble_repository(project, intent_spec: IntentSpecSchema, generated_files:
         frontend_dir = project_dir / 'frontend'
         frontend_dir.mkdir(exist_ok=True)
         
+        frontend_version = intent_spec.stack.get('frontend_version')
+        
         # Place frontend component files
         for comp_id, files in generated_files.items():
             if comp_id == '_root':
@@ -110,8 +173,8 @@ def assemble_repository(project, intent_spec: IntentSpecSchema, generated_files:
                     file_path.parent.mkdir(parents=True, exist_ok=True)
                     file_path.write_text(content, encoding='utf-8')
         
-        # Generate package.json
-        package_json = generate_package_json(frontend, project_name)
+        # Generate package.json with version awareness
+        package_json = generate_package_json(frontend, project_name, frontend_version)
         (frontend_dir / 'package.json').parent.mkdir(parents=True, exist_ok=True)
         (frontend_dir / 'package.json').write_text(package_json, encoding='utf-8')
     
@@ -133,35 +196,53 @@ def assemble_repository(project, intent_spec: IntentSpecSchema, generated_files:
     return zip_path
 
 
-def generate_requirements(backend: str) -> str:
-    """Generate Python requirements.txt based on backend choice."""
+def generate_requirements(backend: str, backend_version: str = None) -> str:
+    """Generate Python requirements.txt based on backend choice and version."""
+    defaults = DEFAULT_VERSIONS.get(backend)
+    if not defaults:
+        return ""
+    
+    fw_version = backend_version or defaults['framework']
+    
     if backend == 'django':
-        return """Django==5.0.1
-djangorestframework==3.14.0
-django-cors-headers==4.3.1
-python-decouple==3.8
+        deps = defaults['deps']
+        return f"""Django=={fw_version}
+djangorestframework=={deps['djangorestframework']}
+django-cors-headers=={deps['django-cors-headers']}
+python-decouple=={deps['python-decouple']}
 """
     elif backend == 'fastapi':
-        return """fastapi==0.109.0
-uvicorn==0.27.0
-pydantic==2.5.3
-python-decouple==3.8
+        deps = defaults['deps']
+        return f"""fastapi=={fw_version}
+uvicorn=={deps['uvicorn']}
+pydantic=={deps['pydantic']}
+python-decouple=={deps['python-decouple']}
+"""
+    elif backend == 'flask':
+        deps = defaults['deps']
+        return f"""Flask=={fw_version}
+python-decouple=={deps['python-decouple']}
 """
     return ""
 
 
-def generate_package_json(frontend: str, project_name: str) -> str:
-    """Generate package.json for frontend."""
+def generate_package_json(frontend: str, project_name: str, frontend_version: str = None) -> str:
+    """Generate package.json for frontend with version awareness."""
+    defaults = DEFAULT_VERSIONS.get(frontend, {})
+    fw_version = frontend_version or defaults.get('framework', '18.2.0')
+    deps = defaults.get('deps', {})
+    
     if frontend == 'react':
+        react_dom_version = fw_version  # react-dom matches react version
         return f"""{{
   "name": "{project_name}",
   "version": "1.0.0",
   "private": true,
   "dependencies": {{
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.21.0",
-    "axios": "^1.6.5"
+    "react": "^{fw_version}",
+    "react-dom": "^{react_dom_version}",
+    "react-router-dom": "^{deps.get('react-router-dom', '6.21.0')}",
+    "axios": "^{deps.get('axios', '1.6.5')}"
   }},
   "scripts": {{
     "start": "react-scripts start",
@@ -176,9 +257,9 @@ def generate_package_json(frontend: str, project_name: str) -> str:
   "version": "1.0.0",
   "private": true,
   "dependencies": {{
-    "vue": "^3.4.0",
-    "vue-router": "^4.2.5",
-    "axios": "^1.6.5"
+    "vue": "^{fw_version}",
+    "vue-router": "^{deps.get('vue-router', '4.2.5')}",
+    "axios": "^{deps.get('axios', '1.6.5')}"
   }},
   "scripts": {{
     "serve": "vue-cli-service serve",

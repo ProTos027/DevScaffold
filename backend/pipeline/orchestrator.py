@@ -12,6 +12,8 @@ from .agents.contract_builder import build_component_plan
 from .agents.folder_contract_builder import build_folder_contracts
 from .agents.dependency_graph_builder import build_dependency_graph, CyclicDependencyError
 from assembly.builder import assemble_repository
+from .action_logger import ActionLogger
+from .rag_service import RAGService
 
 
 class PipelineOrchestrator:
@@ -25,6 +27,7 @@ class PipelineOrchestrator:
         self.user = project.user
         self.model_provider = project.model_provider
         self.api_key = None
+        self.action_logger = ActionLogger(project)
         
         # Priority 1: Persistent API key linked to the project
         if hasattr(project, 'gemini_api_key') and project.gemini_api_key:
@@ -64,6 +67,9 @@ class PipelineOrchestrator:
         try:
             # Use project prompt if not provided
             target_prompt = prompt or self.project.prompt
+            
+            # Clear previous action logs for rerun consistency
+            self.action_logger.clear()
             
             # Stage 1: Build or Load Intent Spec
             if hasattr(self.project, 'intent_spec') and (self.project.spec_confirmed or self.project.status == 'review_required'):
@@ -105,6 +111,18 @@ class PipelineOrchestrator:
                 }
             )
             
+            # Log spec building action
+            self.action_logger.log('spec_building', 'spec_builder', 'built_intent_spec', {
+                'project_type': intent_spec.project_type,
+                'backend': intent_spec.stack.get('backend'),
+                'backend_version': intent_spec.stack.get('backend_version'),
+                'frontend': intent_spec.stack.get('frontend'),
+                'frontend_version': intent_spec.stack.get('frontend_version'),
+                'database': intent_spec.stack.get('database'),
+                'complexity': intent_spec.complexity,
+                'features': intent_spec.features,
+            })
+            
             # Always pause if not confirmed
             if not self.project.spec_confirmed:
                 self._update_status('review_required', 'Review Specification Required', 30)
@@ -129,6 +147,10 @@ class PipelineOrchestrator:
             # Clear any previous validation errors if now valid
             ValidationErrorModel.objects.filter(project=self.project).delete()
             
+            self.action_logger.log('validating', 'validator', 'validation_passed', {
+                'rules_checked': len(validation_result.errors) if hasattr(validation_result, 'errors') else 0
+            })
+            
             # Stage 3: Build Component Plan
             self._update_status('planning', 'Building Component Plan', 40)
             component_plan = build_component_plan(
@@ -142,6 +164,11 @@ class PipelineOrchestrator:
                 project=self.project,
                 defaults={'components': [c.model_dump() for c in component_plan.components]}
             )
+            
+            self.action_logger.log('planning', 'contract_builder', 'built_component_plan', {
+                'component_count': len(component_plan.components),
+                'components': [c.id for c in component_plan.components],
+            })
             
             # Stage 4: Build Dependency Graph
             self._update_status('graph_building', 'Building Dependency Graph', 55)
@@ -160,6 +187,12 @@ class PipelineOrchestrator:
                     'build_order': topological_sort_from_graph(dep_graph)
                 }
             )
+            
+            self.action_logger.log('graph_building', 'dependency_graph_builder', 'built_dependency_graph', {
+                'node_count': len(dep_graph.nodes),
+                'edge_count': len(dep_graph.edges),
+                'build_order': topological_sort_from_graph(dep_graph),
+            })
             
             # Stage 5: Build Folder Contracts
             self._update_status('folder_contracts', 'Building Folder Contracts', 60)
@@ -185,9 +218,28 @@ class PipelineOrchestrator:
                     models_used=contract.models_used
                 )
             
+            self.action_logger.log('folder_contracts', 'folder_contract_builder', 'built_folder_contracts', {
+                'contract_count': len(folder_contracts.contracts),
+                'contracts': [c.component_id for c in folder_contracts.contracts],
+            })
+            
             # Stage 6: Generate Code
             self._update_status('code_generation', 'Generating Code', 75)
             build_order = topological_sort_from_graph(dep_graph)
+            
+            # Initialize RAG knowledge base for framework-specific context
+            rag_service = None
+            try:
+                frameworks = []
+                if intent_spec.stack.get('backend'):
+                    frameworks.append(intent_spec.stack['backend'])
+                if intent_spec.stack.get('frontend'):
+                    frameworks.append(intent_spec.stack['frontend'])
+                rag_service = RAGService(api_key=self.api_key)
+                rag_service.load(frameworks=frameworks)
+            except Exception as e:
+                print(f"⚠️ RAG service failed to load (non-fatal): {e}")
+                rag_service = None
             
             from .agents.code_generator import generate_files_with_gemini
             generated_files = generate_files_with_gemini(
@@ -196,7 +248,9 @@ class PipelineOrchestrator:
                 folder_contracts,
                 build_order,
                 self.project.gemini_model,
-                self.api_key
+                self.api_key,
+                action_logger=self.action_logger,
+                rag_service=rag_service
             )
             
             # Stage 7: Assemble Repository
@@ -210,6 +264,11 @@ class PipelineOrchestrator:
             # Update project
             self.project.zip_file_path = str(zip_path)
             self.project.mark_completed()
+            
+            self.action_logger.log('assembling', 'builder', 'assembled_repository', {
+                'zip_path': str(zip_path),
+                'file_count': len(generated_files),
+            })
             
             return True
             

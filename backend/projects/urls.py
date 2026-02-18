@@ -5,5 +5,6 @@ from . import views
 router = DefaultRouter()
 router.register(r'', views.ProjectViewSet, basename='project')
 
-urlpatterns = router.urls
-
+urlpatterns = [
+    path('versions/', views.available_versions, name='available-versions'),
+] + router.urls

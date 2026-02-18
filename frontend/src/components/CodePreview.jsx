@@ -2,13 +2,18 @@ import React, { useState, useEffect } from 'react';
 import Editor from "@monaco-editor/react";
 import { projectsAPI } from '../api/client';
 
-const CodePreview = ({ projectId }) => {
+const CodePreview = ({ projectId, status, error }) => {
     const [fileTree, setFileTree] = useState([]);
     const [selectedFile, setSelectedFile] = useState(null);
     const [fileContent, setFileContent] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (status !== 'completed') {
+            setLoading(false);
+            return;
+        }
+
         const fetchFiles = async () => {
             try {
                 const { data } = await projectsAPI.browseFiles(projectId);
@@ -34,7 +39,7 @@ const CodePreview = ({ projectId }) => {
             }
         };
         fetchFiles();
-    }, [projectId]);
+    }, [projectId, status]);
 
     const handleFileSelect = async (path) => {
         try {
@@ -78,8 +83,43 @@ const CodePreview = ({ projectId }) => {
         );
     };
 
+    if (status === 'failed') {
+        return (
+            <div className="p-12 text-center bg-[rgb(var(--bg-secondary)/0.3)] rounded-2xl border border-red-500/20">
+                <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Build Failed</h3>
+                <p className="text-[rgb(var(--text-secondary))] max-w-md mx-auto text-sm mb-4">
+                    {error || "An unknown error occurred during code generation."}
+                </p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-[rgb(var(--color-primary))] text-black font-black text-xs rounded-full hover:scale-105 transition-transform"
+                >
+                    RETRY PIPELINE
+                </button>
+            </div>
+        );
+    }
+
+    if (status !== 'completed') {
+        return (
+            <div className="p-12 text-center bg-[rgb(var(--bg-secondary)/0.3)] rounded-2xl border border-[rgb(var(--border-primary))]">
+                <div className="loader mx-auto mb-4"></div>
+                <h3 className="text-lg font-bold text-white mb-2">Code generation in progress...</h3>
+                <p className="text-[rgb(var(--text-secondary))] text-sm italic">
+                    Our agents are currently writing your files. This tab will update automatically once the build is finished.
+                </p>
+            </div>
+        );
+    }
+
     if (loading) return <div className="p-8 text-center animate-pulse text-[rgb(var(--color-primary))]">Mapping repository files...</div>;
-    if (fileTree.length === 0) return <div className="p-8 text-center text-[rgb(var(--text-secondary))]">No files found. The build might still be in progress.</div>;
+    if (fileTree.length === 0) return <div className="p-8 text-center text-[rgb(var(--text-secondary))]">No files found. The repository appears correctly initialized but empty.</div>;
+
 
     return (
         <div className="flex h-[600px] bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] overflow-hidden">

@@ -47,7 +47,7 @@ def build_folder_contracts(
         model_name = "gemini-2.5-flash"
 
     prompt = f"""
-    Framework: {intent_spec.stack.get('backend')}
+    Framework: {intent_spec.stack.get('backend')}{f" v{intent_spec.stack.get('backend_version')}" if intent_spec.stack.get('backend_version') else ""}
     Project Type: {intent_spec.project_type}
     Component Plan: {component_plan.model_dump_json(indent=2)}
     
