@@ -1,9 +1,9 @@
 """
 Management command to set up GitHub OAuth without needing credentials.
-For development, we'll create a placeholder SocialApp.
 """
 from django.core.management.base import BaseCommand
 from django.contrib.sites.models import Site
+from django.conf import settings
 from allauth.socialaccount.models import SocialApp
 
 
@@ -13,8 +13,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Get or create the current site
         site = Site.objects.get_current()
-        site.domain = 'localhost:8000'
-        site.name = 'DevScaffold'
+        site.domain = settings.SITE_DOMAIN
+        site.name = settings.SITE_NAME
         site.save()
         
         self.stdout.write(f'Site configured: {site.domain}')

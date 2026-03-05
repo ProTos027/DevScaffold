@@ -1,17 +1,36 @@
 """
 Custom adapter for django-allauth to handle GitHub OAuth with JWT tokens.
 """
+from allauth.account.adapter import DefaultAccountAdapter
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 from allauth.account.utils import user_email, user_field
 from allauth.utils import valid_email_or_none
+from django.conf import settings
 from django.shortcuts import redirect
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
+class AccountAdapter(DefaultAccountAdapter):
+    """
+    Adapter for standard email authentication.
+    """
+    def get_login_redirect_url(self, request):
+        """
+        Redirect to frontend with JWT tokens after login.
+        """
+        if request.user.is_authenticated:
+            refresh = RefreshToken.for_user(request.user)
+            return f"{settings.FRONTEND_URL}/auth/callback?access={refresh.access_token}&refresh={refresh}"
+        return super().get_login_redirect_url(request)
+
+
 class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
+    """
+    Adapter for Social (GitHub) authentication.
+    """
     def populate_user(self, request, sociallogin, data):
         """
-        Override to populate user without username field (email-only model).
+        Override to populate user.
         """
         user = sociallogin.user
         
@@ -41,7 +60,7 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
     
     def save_user(self, request, sociallogin, form=None):
         """
-        Override to save user without calling populate_username.
+        Override to save social user.
         """
         user = sociallogin.user
         user.set_unusable_password()
@@ -57,7 +76,5 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         # Generate JWT tokens for the authenticated user
         refresh = RefreshToken.for_user(request.user)
         
-        # Redirect to frontend with tokens in URL (will be moved to localStorage)
-        frontend_url = f"http://localhost:5173/auth/github/callback?access={refresh.access_token}&refresh={refresh}"
-        
-        return frontend_url
+        # Redirect to frontend
+        return f"{settings.FRONTEND_URL}/auth/github/callback?access={refresh.access_token}&refresh={refresh}"

@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
-    Project, IntentSpec, ComponentPlan, 
-    DependencyGraph, FolderContract, ValidationError
+    Project, IntentSpec, ComponentPlan,
+    ValidationError, PipelineActionLog
 )
 
 
@@ -15,8 +15,11 @@ class ProjectAdmin(admin.ModelAdmin):
 
 @admin.register(IntentSpec)
 class IntentSpecAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'project_type', 'complexity', 'version', 'created_at')
-    list_filter = ('project_type', 'complexity')
+    list_display = (
+        'id', 'project', 'project_type', 'api_type', 
+        'architecture', 'auth_method', 'version', 'created_at'
+    )
+    list_filter = ('project_type', 'api_type', 'architecture', 'auth_method')
 
 
 @admin.register(ComponentPlan)
@@ -24,19 +27,13 @@ class ComponentPlanAdmin(admin.ModelAdmin):
     list_display = ('id', 'project', 'generated_at')
 
 
-@admin.register(DependencyGraph)
-class DependencyGraphAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'generated_at')
-
-
-@admin.register(FolderContract)
-class FolderContractAdmin(admin.ModelAdmin):
-    list_display = ('id', 'project', 'component_id', 'folder_path', 'generated_at')
-    list_filter = ('component_id',)
-
-
 @admin.register(ValidationError)
 class ValidationErrorAdmin(admin.ModelAdmin):
     list_display = ('id', 'project', 'rule_name', 'severity', 'created_at')
     list_filter = ('severity', 'rule_name')
 
+
+@admin.register(PipelineActionLog)
+class PipelineActionLogAdmin(admin.ModelAdmin):
+    list_display = ('id', 'project', 'stage', 'agent', 'action', 'created_at')
+    list_filter = ('stage', 'agent', 'action')

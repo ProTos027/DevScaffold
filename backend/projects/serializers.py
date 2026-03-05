@@ -2,7 +2,7 @@
 DRF serializers for projects app.
 """
 from rest_framework import serializers
-from .models import Project, IntentSpec, ComponentPlan, DependencyGraph, ValidationError
+from .models import Project, IntentSpec, ComponentPlan, ValidationError
 
 
 class IntentSpecSerializer(serializers.ModelSerializer):
@@ -10,8 +10,8 @@ class IntentSpecSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = IntentSpec
-        fields = ('id', 'project_type', 'complexity', 'stack', 'features', 
-                 'architecture', 'data_entities', 'constraints', 'version',
+        fields = ('id', 'project_type', 'stack', 'api_type', 'features', 
+                 'architecture', 'data_entities', 'auth_method', 'version',
                  'created_at', 'updated_at')
         read_only_fields = ('id', 'created_at', 'updated_at', 'version')
 
@@ -25,13 +25,6 @@ class ComponentPlanSerializer(serializers.ModelSerializer):
         read_only_fields = ('id', 'components', 'generated_at')
 
 
-class DependencyGraphSerializer(serializers.ModelSerializer):
-    """Serializer for Dependency Graph."""
-    
-    class Meta:
-        model = DependencyGraph
-        fields = ('id', 'nodes', 'edges', 'build_order', 'generated_at')
-        read_only_fields = ('id', 'nodes', 'edges', 'build_order', 'generated_at')
 
 
 class ValidationErrorSerializer(serializers.ModelSerializer):
@@ -56,7 +49,6 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
     
     intent_spec = IntentSpecSerializer(read_only=True)
     component_plan = ComponentPlanSerializer(read_only=True)
-    dependency_graph = DependencyGraphSerializer(read_only=True)
     validation_errors = ValidationErrorSerializer(many=True, read_only=True)
     api_key_name = serializers.SerializerMethodField()
     
@@ -65,7 +57,7 @@ class ProjectDetailSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'prompt', 'model_provider', 'gemini_model', 'status', 'current_stage',
                  'progress', 'error_message', 'zip_file_path', 'created_at', 'updated_at',
                  'completed_at', 'deletion_scheduled_at', 'intent_spec', 'component_plan',
-                 'dependency_graph', 'validation_errors', 'api_key_name')
+                 'validation_errors', 'api_key_name')
         read_only_fields = ('id', 'status', 'current_stage', 'progress', 'error_message',
                            'zip_file_path', 'created_at', 'updated_at', 'completed_at',
                            'deletion_scheduled_at', 'gemini_model', 'api_key_name')

@@ -6,9 +6,6 @@ import DependencyGraph from '../components/DependencyGraph';
 import CodePreview from '../components/CodePreview';
 import PipelineStepper from '../components/PipelineStepper';
 
-
-
-
 export default function ProjectPage() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -52,14 +49,13 @@ export default function ProjectPage() {
     useEffect(() => {
         fetchProject();
 
-        // Only poll if project is not in terminal state
         const interval = setInterval(() => {
             if (project && (project.status === 'completed' || project.status === 'failed')) {
                 clearInterval(interval);
             } else {
                 pollStatus();
             }
-        }, 2000); // Poll every 2 seconds for faster updates
+        }, 2000);
 
         return () => clearInterval(interval);
     }, [id, project?.status]);
@@ -79,10 +75,8 @@ export default function ProjectPage() {
         try {
             const { data } = await projectsAPI.getStatus(id);
             setProject((prev) => ({ ...prev, ...data }));
-
-            // Stop polling if completed or failed
             if (data.status === 'completed' || data.status === 'failed') {
-                fetchProject(); // Fetch full project details
+                fetchProject();
             }
         } catch (error) {
             console.error('Failed to poll status:', error);
@@ -213,23 +207,19 @@ export default function ProjectPage() {
                     </div>
                 </div>
 
-                {/* Pipeline Stepper */}
-                {project.status !== 'failed' && (
-                    <PipelineStepper status={project.status} />
-                )}
+                {project.status !== 'failed' && <PipelineStepper status={project.status} />}
             </div>
 
-
-            {/* Tabs */}
-            <div className="bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] rounded-3xl mb-6">
-                <div className="flex border-b border-[rgb(var(--border-primary))]">
+            {/* Tabs Navigation */}
+            <div className="bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] rounded-3xl mb-6 overflow-hidden">
+                <div className="flex">
                     {['status', 'intent-spec', 'components', 'code'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-6 py-4 font-medium transition-colors ${activeTab === tab
-                                ? 'border-b-2 border-[rgb(var(--color-primary))] text-[rgb(var(--color-primary))]'
-                                : 'text-[rgb(var(--text-secondary))] transition-transform hover:scale-110'
+                            className={`px-6 py-4 font-bold transition-all ${activeTab === tab
+                                ? 'bg-[rgb(var(--bg-primary))] text-[rgb(var(--color-primary))] border-b-2 border-[rgb(var(--color-primary))]'
+                                : 'text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))]'
                                 }`}
                         >
                             {tab.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}
@@ -239,402 +229,343 @@ export default function ProjectPage() {
             </div>
 
             {/* Tab Content */}
-            <div className="glass-card p-6">
-                {/* Review Required Integrated Banner */}
-                {project.status === 'review_required' && (
-                    <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 mb-8">
-                        <div className="flex items-start gap-4">
-                            <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 shrink-0">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                </svg>
-                            </div>
-                            <div className="flex-1">
-                                <h3 className="text-xl font-bold text-yellow-500 mb-1">Review Specification Required</h3>
-                                <p className="text-yellow-200/70 mb-4 max-w-2xl text-sm">
-                                    {project.intent_spec?.explanation || "The intent prompt was vague. The system has made some intelligent assumptions to move forward. Please review and edit the specification below before proceeding with code generation."}
-                                </p>
-                                <div className="flex gap-3">
-                                    <button
-                                        onClick={handleConfirmSpec}
-                                        className="px-6 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 transition-colors"
-                                    >
-                                        Confirm & Generate
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setActiveTab('intent-spec');
-                                            setIsEditing(true);
-                                        }}
-                                        className="px-6 py-2 bg-[rgb(var(--bg-secondary)/0.5)] text-[rgb(var(--text-primary))] font-bold rounded-lg transition-transform hover:scale-105 border border-[rgb(var(--border-primary))]"
-                                    >
-                                        Edit Spec
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
+            <div className="glass-card p-6 min-h-[60vh]">
+                {/* Status Tab */}
                 {activeTab === 'status' && (
-                    <div className="space-y-4">
-                        <h2 className="text-subtitle font-bold mb-4">Pipeline Status</h2>
-
-                        {project.error_message && (
-                            <div className="bg-[rgb(var(--status-error)/0.1)] border border-[rgb(var(--status-error)/0.3)] text-[rgb(var(--status-error))] px-4 py-3 rounded-lg">
-                                <strong>Error:</strong> {project.error_message}
+                    <div className="space-y-6 animate-fade-in">
+                        {project.status === 'review_required' && (
+                            <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-2xl p-6 mb-8">
+                                <div className="flex items-start gap-4">
+                                    <div className="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center text-yellow-500 shrink-0">
+                                        <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-xl font-bold text-yellow-500 mb-1">Review Specification Required</h3>
+                                        <p className="text-yellow-200/70 mb-4 max-w-2xl text-sm italic">
+                                            "{project.intent_spec?.explanation || "The intent prompt was vague. The system has made some intelligent assumptions to move forward."}"
+                                        </p>
+                                        <div className="flex gap-3">
+                                            <button onClick={handleConfirmSpec} className="px-6 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 transition-colors shadow-lg shadow-yellow-500/20">
+                                                Confirm & Generate
+                                            </button>
+                                            <button onClick={() => { setActiveTab('intent-spec'); setIsEditing(true); }} className="px-6 py-2 bg-white/5 text-white font-bold rounded-lg hover:bg-white/10 transition-colors border border-white/10">
+                                                Edit Spec
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         )}
 
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-[rgb(var(--bg-secondary)/0.5)] p-6 rounded-2xl border border-[rgb(var(--border-primary))]">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/5">
+                                <h3 className="text-xs font-bold text-[rgb(var(--text-secondary))] uppercase tracking-widest">Build Status</h3>
                                 <div className="space-y-3">
-                                    <p className="flex justify-between items-center text-sm">
-                                        <span className="text-label">Project Status</span>
-                                        <span className="badge-info">{project.status}</span>
-                                    </p>
-                                    <p className="flex justify-between items-center text-sm">
-                                        <span className="text-label">Current Stage</span>
-                                        <span className="text-[rgb(var(--text-primary))] font-medium">{project.current_stage || 'N/A'}</span>
-                                    </p>
-                                    <p className="flex justify-between items-center text-sm">
-                                        <span className="text-label">Build Progress</span>
-                                        <span className="text-[rgb(var(--text-primary))] font-black">{project.progress}%</span>
-                                    </p>
+                                    <div className="flex justify-between items-center"><span className="text-sm opacity-60">Status</span><span className="badge-info capitalize">{project.status}</span></div>
+                                    <div className="flex justify-between items-center"><span className="text-sm opacity-60">Current Stage</span><span className="text-sm font-bold">{project.current_stage || 'N/A'}</span></div>
+                                    <div className="flex justify-between items-center"><span className="text-sm opacity-60">Progress</span><span className="text-sm font-black text-[rgb(var(--color-primary))]">{project.progress}%</span></div>
                                 </div>
+                            </div>
+                            <div className="space-y-4 p-6 bg-white/5 rounded-2xl border border-white/5">
+                                <h3 className="text-xs font-bold text-[rgb(var(--text-secondary))] uppercase tracking-widest">Environment</h3>
                                 <div className="space-y-3">
-                                    <p className="flex justify-between items-center text-sm">
-                                        <span className="text-label">LLM Model</span>
-                                        <span className="text-[rgb(var(--color-primary))] font-black uppercase text-[11px]">{project.gemini_model || 'System Default'}</span>
-                                    </p>
-                                    <p className="flex justify-between items-center text-sm">
-                                        <span className="text-label">API Key Used</span>
-                                        <span className="text-[rgb(var(--color-primary))] font-black uppercase text-[11px]">{project.api_key_name || 'N/A'}</span>
-                                    </p>
-                                    <p className="flex justify-between items-center text-sm">
-                                        <span className="text-label">Started At</span>
-                                        <span className="text-[rgb(var(--text-primary))] font-medium text-[11px]">{new Date(project.created_at).toLocaleString()}</span>
-                                    </p>
-                                    {project.completed_at && (
-                                        <p className="flex justify-between items-center text-sm">
-                                            <span className="text-label">Finished At</span>
-                                            <span className="badge-success">{new Date(project.completed_at).toLocaleString()}</span>
-                                        </p>
-                                    )}
-                                    {project.completed_at && (
-                                        <p className="flex justify-between items-center text-sm pt-2 border-t border-[rgb(var(--border-primary))]">
-                                            <span className="text-[rgb(var(--text-secondary))] font-bold uppercase tracking-widest text-[10px]">Total Duration</span>
-                                            <span className="text-[rgb(var(--color-primary))] font-black text-xs">{getDuration()}</span>
-                                        </p>
-                                    )}
+                                    <div className="flex justify-between items-center"><span className="text-sm opacity-60">Model</span><span className="text-xs font-bold uppercase">{project.gemini_model}</span></div>
+                                    <div className="flex justify-between items-center"><span className="text-sm opacity-60">Duration</span><span className="text-xs font-bold text-[rgb(var(--color-primary))]">{getDuration() || 'In Progress'}</span></div>
+                                    <div className="flex justify-between items-center"><span className="text-sm opacity-60">Created At</span><span className="text-xs font-bold">{new Date(project.created_at).toLocaleString()}</span></div>
                                 </div>
                             </div>
                         </div>
+
+                        {project.error_message && (
+                            <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm font-medium">
+                                <span className="font-bold mr-2 uppercase text-[10px] bg-red-400 text-black px-1.5 py-0.5 rounded">Error</span>
+                                {project.error_message}
+                            </div>
+                        )}
                     </div>
                 )}
 
+                {/* Intent Spec Tab */}
                 {activeTab === 'intent-spec' && (
-                    <div className="space-y-8">
-                        <div className="flex justify-between items-center mb-6">
+                    <div className="animate-fade-in space-y-6">
+                        <div className="flex justify-between items-center">
                             <h2 className="text-2xl font-bold">Intent Specification</h2>
-                            <div className="flex gap-2">
-                                <button
-                                    onClick={() => setIsEditing(!isEditing)}
-                                    className={`px-4 py-2 rounded-lg font-bold transition-all border ${isEditing
-                                        ? 'bg-[rgb(var(--status-error)/0.1)] border-[rgb(var(--status-error)/0.3)] text-[rgb(var(--status-error))]'
-                                        : 'bg-[rgb(var(--status-info)/0.1)] border-[rgb(var(--status-info)/0.3)] text-[rgb(var(--status-info))]'
-                                        }`}
-                                >
-                                    {isEditing ? 'Cancel Editing' : 'Edit Specification'}
-                                </button>
+                            <div className="flex gap-3">
                                 {isEditing && (
-                                    <button
-                                        onClick={handleUpdateSpec}
-                                        className="px-4 py-2 bg-[rgb(var(--color-primary))] text-black font-bold rounded-lg hover:opacity-80 transition-all"
-                                    >
+                                    <button onClick={handleUpdateSpec} className="px-4 py-2 bg-[rgb(var(--color-primary))] text-black font-bold rounded-lg hover:opacity-90">
                                         Save Changes
                                     </button>
                                 )}
+                                <button
+                                    onClick={() => setIsEditing(!isEditing)}
+                                    className={`px-4 py-2 font-bold rounded-lg border transition-all ${isEditing ? 'bg-red-500/10 border-red-500/30 text-red-400' : 'bg-white/5 border-white/10 text-white'}`}
+                                >
+                                    {isEditing ? 'Cancel Edit' : 'Edit Spec'}
+                                </button>
                             </div>
                         </div>
 
                         {!project.intent_spec && !isEditing ? (
-                            <p className="text-[rgb(var(--text-secondary))]">Intent spec not yet generated</p>
+                            <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                                <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                <p>Specification not yet generated</p>
+                            </div>
                         ) : isEditing ? (
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                {/* Form Column 1: Stack & Features */}
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                 <div className="space-y-6">
-                                    <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))]">
-                                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                            <svg className="w-5 h-5 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                                            </svg>
-                                            Technology Stack
-                                        </h3>
-                                        <CustomSelect
-                                            label="Backend"
-                                            options={[
-                                                { value: 'none', label: 'None/Custom' },
-                                                { value: 'fastapi', label: 'FastAPI (Python)' },
-                                                { value: 'django', label: 'Django (Python)' },
-                                                { value: 'express', label: 'Express (Node.js)' },
-                                                { value: 'springboot', label: 'Spring Boot (Java)' },
-                                            ]}
-                                            value={editSpec?.stack?.backend || 'none'}
-                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, backend: val === 'none' ? null : val, backend_version: null } })}
-                                        />
-                                        {editSpec?.stack?.backend && availableVersions[editSpec.stack.backend] && (
-                                            <>
+                                    <div className="p-6 bg-white/5 rounded-2xl border border-white/10">
+                                        <h3 className="text-lg font-bold mb-6 text-[rgb(var(--color-primary))]">Technology Stack</h3>
+                                        <div className="space-y-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                 <CustomSelect
-                                                    label="Backend Version"
-                                                    options={[
-                                                        { value: 'latest', label: 'Latest (default)' },
-                                                        ...availableVersions[editSpec.stack.backend].map(v => ({ value: v, label: `v${v}` }))
-                                                    ]}
-                                                    value={editSpec?.stack?.backend_version || 'latest'}
-                                                    onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, backend_version: val === 'latest' ? null : val } })}
+                                                    label="Backend"
+                                                    options={[{ value: 'none', label: 'None' }, { value: 'fastapi', label: 'FastAPI' }, { value: 'django', label: 'Django' }, { value: 'express', label: 'Express' }, { value: 'springboot', label: 'Spring Boot' }]}
+                                                    value={editSpec?.stack?.backend || 'none'}
+                                                    onChange={v => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, backend: v === 'none' ? null : v }, backend_version: null })}
                                                 />
-                                                <p className="text-xs text-[rgb(var(--text-secondary))] mt-1 pl-1">
-                                                    {{
-                                                        django: editSpec?.stack?.backend_version?.startsWith('5') || !editSpec?.stack?.backend_version
-                                                            ? '⚡ Django 5.x requires Python 3.10+'
-                                                            : '⚡ Django 4.2 requires Python 3.8+',
-                                                        fastapi: '⚡ FastAPI requires Python 3.8+',
-                                                        flask: '⚡ Flask requires Python 3.8+',
-                                                        express: '⚡ Express requires Node.js 14+',
-                                                        springboot: '⚡ Spring Boot 3.x requires Java 17+',
-                                                    }[editSpec.stack.backend]}
-                                                </p>
-                                            </>
-                                        )}
-                                        <CustomSelect
-                                            label="Frontend"
-                                            options={[
-                                                { value: 'none', label: 'None/API Only' },
-                                                { value: 'react', label: 'React (Vite)' },
-                                                { value: 'vue', label: 'Vue (Vite)' },
-                                                { value: 'nextjs', label: 'Next.js' },
-                                            ]}
-                                            value={editSpec?.stack?.frontend || 'none'}
-                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, frontend: val === 'none' ? null : val, frontend_version: null } })}
-                                        />
-                                        {editSpec?.stack?.frontend && editSpec.stack.frontend !== 'none' && availableVersions[editSpec.stack.frontend] && (
-                                            <>
-                                                <CustomSelect
-                                                    label="Frontend Version"
-                                                    options={[
-                                                        { value: 'latest', label: 'Latest (default)' },
-                                                        ...availableVersions[editSpec.stack.frontend].map(v => ({ value: v, label: `v${v}` }))
-                                                    ]}
-                                                    value={editSpec?.stack?.frontend_version || 'latest'}
-                                                    onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, frontend_version: val === 'latest' ? null : val } })}
-                                                />
-                                                <p className="text-xs text-[rgb(var(--text-secondary))] mt-1 pl-1">
-                                                    {{
-                                                        react: editSpec?.stack?.frontend_version?.startsWith('19') ? '⚡ React 19 requires Node.js 18+' : '⚡ React 18 requires Node.js 14+',
-                                                        vue: '⚡ Vue 3.x requires Node.js 16+',
-                                                        nextjs: editSpec?.stack?.frontend_version?.startsWith('15') ? '⚡ Next.js 15 requires Node.js 18.18+' : '⚡ Next.js requires Node.js 16.14+',
-                                                    }[editSpec.stack.frontend]}
-                                                </p>
-                                            </>
-                                        )}
-                                        <CustomSelect
-                                            label="Database"
-                                            options={[
-                                                { value: 'none', label: 'None' },
-                                                { value: 'sqlite', label: 'SQLite' },
-                                                { value: 'postgres', label: 'PostgreSQL' },
-                                                { value: 'mongodb', label: 'MongoDB' },
-                                            ]}
-                                            value={editSpec?.stack?.database || 'none'}
-                                            onChange={val => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, database: val === 'none' ? null : val } })}
-                                        />
-                                    </div>
+                                                {editSpec?.stack?.backend && availableVersions[editSpec.stack.backend] && (
+                                                    <CustomSelect
+                                                        label={`${editSpec.stack.backend} Version`}
+                                                        options={availableVersions[editSpec.stack.backend].map(v => ({ value: v, label: v }))}
+                                                        value={editSpec?.backend_version || ''}
+                                                        placeholder="Auto (Latest)"
+                                                        onChange={v => setEditSpec({ ...editSpec, backend_version: v })}
+                                                    />
+                                                )}
+                                            </div>
 
-                                    <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))]">
-                                        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                            <svg className="w-5 h-5 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-7.714 2.143L11 21l-2.286-6.857L1 12l7.714-2.143L11 3z" />
-                                            </svg>
-                                            System Features
-                                        </h3>
-                                        <div className="flex flex-wrap gap-2">
-                                            {/* Combined list of default and custom features to ensure all are rendered as buttons */}
-                                            {Array.from(new Set([...['authentication', 'user_profiles', 'file_upload', 'notifications', 'search', 'admin_panel', 'stripe_payments', 'analytics'], ...editSpec.features])).map(feature => (
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <CustomSelect
+                                                    label="Frontend"
+                                                    options={[{ value: 'none', label: 'None' }, { value: 'react', label: 'React' }, { value: 'vue', label: 'Vue' }, { value: 'nextjs', label: 'Next.js' }]}
+                                                    value={editSpec?.stack?.frontend || 'none'}
+                                                    onChange={v => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, frontend: v === 'none' ? null : v }, frontend_version: null })}
+                                                />
+                                                {editSpec?.stack?.frontend && availableVersions[editSpec.stack.frontend] && (
+                                                    <CustomSelect
+                                                        label={`${editSpec.stack.frontend} Version`}
+                                                        options={availableVersions[editSpec.stack.frontend].map(v => ({ value: v, label: v }))}
+                                                        value={editSpec?.frontend_version || ''}
+                                                        placeholder="Auto (Latest)"
+                                                        onChange={v => setEditSpec({ ...editSpec, frontend_version: v })}
+                                                    />
+                                                )}
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <CustomSelect
+                                                    label="Database"
+                                                    options={[{ value: 'none', label: 'None' }, { value: 'sqlite', label: 'SQLite' }, { value: 'postgres', label: 'PostgreSQL' }, { value: 'mongodb', label: 'MongoDB' }]}
+                                                    value={editSpec?.stack?.database || 'none'}
+                                                    onChange={v => setEditSpec({ ...editSpec, stack: { ...editSpec.stack, database: v === 'none' ? null : v } })}
+                                                />
+                                                {editSpec?.stack?.database && availableVersions[editSpec.stack.database] && (
+                                                    <CustomSelect
+                                                        label={`${editSpec.stack.database} Version`}
+                                                        options={availableVersions[editSpec.stack.database].map(v => ({ value: v, label: v }))}
+                                                        value={editSpec?.database_version || ''}
+                                                        placeholder="Auto (Default)"
+                                                        onChange={v => setEditSpec({ ...editSpec, database_version: v })}
+                                                    />
+                                                )}
+                                            </div>
+
+                                            <div className="pt-6 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <CustomSelect
+                                                    label="API Type"
+                                                    options={[{ value: 'rest', label: 'REST API' }, { value: 'graphql', label: 'GraphQL' }, { value: 'none', label: 'None' }]}
+                                                    value={editSpec?.api_type || 'rest'}
+                                                    onChange={v => setEditSpec({ ...editSpec, api_type: v })}
+                                                />
+                                                <CustomSelect
+                                                    label="Complexity"
+                                                    options={[{ value: 'minimal', label: 'Minimal (Basic MVP)' }, { value: 'standard', label: 'Standard (Production)' }, { value: 'full', label: 'Full (Enterprise)' }]}
+                                                    value={editSpec?.complexity || 'minimal'}
+                                                    onChange={v => setEditSpec({ ...editSpec, complexity: v })}
+                                                />
+                                            </div>
+                                            <CustomSelect
+                                                label="Auth Method"
+                                                options={[{ value: 'none', label: 'None' }, { value: 'jwt', label: 'JWT' }, { value: 'session', label: 'Session' }]}
+                                                value={editSpec?.constraints?.auth_method || 'none'}
+                                                onChange={v => setEditSpec({ ...editSpec, constraints: { ...editSpec.constraints, auth_method: v === 'none' ? null : v } })}
+                                            />
+                                        </div>
+                                    </div>
+                                    <div className="p-6 bg-white/5 rounded-2xl border border-white/10 text-sm">
+                                        <h3 className="text-lg font-bold mb-4">Features</h3>
+                                        <div className="flex flex-wrap gap-2 mb-4">
+                                            {['authentication', 'user_profiles', 'file_upload', 'notifications', 'search', 'admin_panel'].map(f => (
                                                 <button
-                                                    key={feature}
+                                                    key={f}
                                                     onClick={() => {
-                                                        const features = editSpec.features.includes(feature)
-                                                            ? editSpec.features.filter(f => f !== feature)
-                                                            : [...editSpec.features, feature];
+                                                        const features = editSpec.features.includes(f) ? editSpec.features.filter(x => x !== f) : [...editSpec.features, f];
                                                         setEditSpec({ ...editSpec, features });
                                                     }}
-                                                    className={`px-3 py-1 rounded-full text-xs font-bold transition-all border ${editSpec.features.includes(feature)
-                                                        ? 'bg-[rgb(var(--color-primary))]/20 border-[rgb(var(--color-primary))] text-[rgb(var(--color-primary))]'
-                                                        : 'bg-[rgb(var(--bg-secondary)/0.5)] border-[rgb(var(--border-primary))] text-[rgb(var(--text-secondary))]'
-                                                        }`}
+                                                    className={`px-3 py-1 rounded-full border text-[10px] font-bold uppercase transition-all ${editSpec.features.includes(f) ? 'bg-[rgb(var(--color-primary))]/20 border-[rgb(var(--color-primary))] text-[rgb(var(--color-primary))]' : 'bg-white/5 border-white/10 text-white/30'}`}
                                                 >
-                                                    {feature.replace(/_/g, ' ')}
+                                                    {f.replace('_', ' ')}
                                                 </button>
                                             ))}
-                                            <div className="flex gap-2 w-full mt-2">
+                                        </div>
+                                        <div className="pt-4 border-t border-white/5">
+                                            <div className="text-[10px] font-bold text-white/20 uppercase mb-3 tracking-widest">Custom Features</div>
+                                            <div className="flex flex-wrap gap-2 mb-4">
+                                                {editSpec?.features?.filter(f => !['authentication', 'user_profiles', 'file_upload', 'notifications', 'search', 'admin_panel'].includes(f)).map((f, i) => (
+                                                    <span key={i} className="px-3 py-1 bg-[rgb(var(--color-primary))]/10 border border-[rgb(var(--color-primary))/0.3] rounded-full text-[10px] uppercase font-bold text-[rgb(var(--text-primary))] flex items-center gap-2">
+                                                        {f}
+                                                        <button onClick={() => setEditSpec({ ...editSpec, features: editSpec.features.filter(x => x !== f) })} className="text-red-500 hover:text-red-400">×</button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <div className="flex gap-2">
                                                 <input
                                                     type="text"
                                                     placeholder="Add custom feature..."
-                                                    className="flex-1 bg-[rgb(var(--bg-primary)/0.5)] border border-[rgb(var(--border-primary))] rounded-lg p-2 text-sm text-[rgb(var(--text-primary))] focus:outline-none focus:border-[rgb(var(--color-primary))]"
+                                                    id="customFeatureInput"
+                                                    className="flex-1 bg-white/5 border border-white/10 rounded-xl p-3 text-sm focus:outline-none focus:border-[rgb(var(--color-primary))]"
                                                     onKeyDown={e => {
                                                         if (e.key === 'Enter' && e.target.value.trim()) {
-                                                            const newFeature = e.target.value.trim().toLowerCase().replace(/\s+/g, '_');
-                                                            if (!editSpec.features.includes(newFeature)) {
-                                                                setEditSpec({ ...editSpec, features: [...editSpec.features, newFeature] });
+                                                            const val = e.target.value.trim().toLowerCase().replace(' ', '_');
+                                                            if (!editSpec.features.includes(val)) {
+                                                                setEditSpec({ ...editSpec, features: [...editSpec.features, val] });
                                                             }
                                                             e.target.value = '';
                                                         }
                                                     }}
                                                 />
+                                                <button
+                                                    onClick={() => {
+                                                        const input = document.getElementById('customFeatureInput');
+                                                        if (input.value.trim()) {
+                                                            const val = input.value.trim().toLowerCase().replace(' ', '_');
+                                                            if (!editSpec.features.includes(val)) {
+                                                                setEditSpec({ ...editSpec, features: [...editSpec.features, val] });
+                                                            }
+                                                            input.value = '';
+                                                        }
+                                                    }}
+                                                    className="px-4 py-2 bg-white/10 hover:bg-white/20 rounded-xl font-bold transition-all"
+                                                >
+                                                    +
+                                                </button>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                {/* Form Column 2: Data Entities */}
-                                <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] h-fit">
-                                    <h3 className="text-xl font-bold mb-4 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <svg className="w-5 h-5 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 7v10c0 2 2 2 2 2h12c2 0 2-2 2-2V7c0-2-2-2-2-2H6c-2 0-2 2-2 2zm0 5h16" />
-                                            </svg>
-                                            Data Entities
-                                        </div>
-                                        <button
-                                            onClick={() => setEditSpec({
-                                                ...editSpec,
-                                                data_entities: [...editSpec.data_entities, { name: 'NewEntity', fields: ['id', 'name'] }]
-                                            })}
-                                            className="text-xs bg-[rgb(var(--color-primary))] text-[rgb(var(--bg-primary))] px-2 py-1 rounded font-bold"
-                                        >
-                                            + Add Entity
-                                        </button>
-                                    </h3>
-                                    <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                <div className="p-6 bg-white/5 rounded-2xl border border-white/10 overflow-y-auto max-h-[700px]">
+                                    <h3 className="text-lg font-bold mb-6">Data Entities</h3>
+                                    <div className="space-y-4">
                                         {editSpec?.data_entities?.map((entity, idx) => (
-                                            <div key={idx} className="p-4 bg-[rgb(var(--bg-primary)/0.3)] rounded-xl border border-[rgb(var(--border-primary)/0.5)] relative group">
-                                                <button
-                                                    onClick={() => setEditSpec({
-                                                        ...editSpec,
-                                                        data_entities: editSpec.data_entities.filter((_, i) => i !== idx)
-                                                    })}
-                                                    className="absolute top-2 right-2 text-[rgb(var(--status-error))] opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
+                                            <div key={idx} className="p-4 bg-black/20 rounded-xl border border-white/5 relative group">
+                                                <button onClick={() => setEditSpec({ ...editSpec, data_entities: editSpec.data_entities.filter((_, i) => i !== idx) })} className="absolute top-2 right-2 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">×</button>
                                                 <input
                                                     type="text"
                                                     value={entity.name}
                                                     onChange={e => {
-                                                        const newEntities = [...editSpec.data_entities];
-                                                        newEntities[idx].name = e.target.value;
-                                                        setEditSpec({ ...editSpec, data_entities: newEntities });
+                                                        const next = [...editSpec.data_entities];
+                                                        next[idx].name = e.target.value;
+                                                        setEditSpec({ ...editSpec, data_entities: next });
                                                     }}
-                                                    className="bg-transparent text-[rgb(var(--color-primary))] font-bold border-b border-[rgb(var(--border-primary))] mb-2 focus:outline-none focus:border-[rgb(var(--color-primary))]"
+                                                    className="bg-transparent text-[rgb(var(--color-primary))] font-bold border-b border-white/10 mb-2 focus:outline-none"
                                                 />
-                                                <div className="flex flex-wrap gap-1 mb-3">
-                                                    {entity.fields.map((field, fIdx) => (
-                                                        <span key={fIdx} className="group/tag inline-flex items-center gap-1 px-2 py-0.5 bg-[rgb(var(--bg-primary))] border border-[rgb(var(--color-primary))] text-[rgb(var(--color-primary))] text-[10px] font-bold rounded-full">
-                                                            {field}
-                                                            <button
-                                                                onClick={() => {
-                                                                    const newEntities = [...editSpec.data_entities];
-                                                                    newEntities[idx].fields = entity.fields.filter((_, i) => i !== fIdx);
-                                                                    setEditSpec({ ...editSpec, data_entities: newEntities });
-                                                                }}
-                                                                className="hover:text-white transition-colors"
-                                                            >
-                                                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" />
-                                                                </svg>
-                                                            </button>
+                                                <div className="flex flex-wrap gap-1 mb-2">
+                                                    {entity.fields.map((f, fi) => (
+                                                        <span key={fi} className="inline-flex items-center gap-1 px-2 py-0.5 bg-white/5 text-[10px] font-bold rounded-lg">
+                                                            {f}
+                                                            <button onClick={() => {
+                                                                const next = [...editSpec.data_entities];
+                                                                next[idx].fields = entity.fields.filter((_, i) => i !== fi);
+                                                                setEditSpec({ ...editSpec, data_entities: next });
+                                                            }} className="text-red-500 hover:text-red-400">×</button>
                                                         </span>
                                                     ))}
                                                 </div>
                                                 <input
                                                     type="text"
                                                     placeholder="Add field..."
-                                                    className="w-full bg-black/20 border border-white/5 rounded-lg p-2 text-xs text-[rgb(var(--text-primary))] focus:outline-none focus:border-[rgb(var(--color-primary))]"
+                                                    className="w-full bg-white/5 border border-white/5 rounded-lg p-2 text-xs focus:outline-none focus:border-[rgb(var(--color-primary))]"
                                                     onKeyDown={e => {
                                                         if (e.key === 'Enter' && e.target.value.trim()) {
-                                                            const newField = e.target.value.trim();
-                                                            if (!entity.fields.includes(newField)) {
-                                                                const newEntities = [...editSpec.data_entities];
-                                                                newEntities[idx].fields = [...entity.fields, newField];
-                                                                setEditSpec({ ...editSpec, data_entities: newEntities });
-                                                            }
+                                                            const next = [...editSpec.data_entities];
+                                                            next[idx].fields = [...entity.fields, e.target.value.trim()];
+                                                            setEditSpec({ ...editSpec, data_entities: next });
                                                             e.target.value = '';
                                                         }
                                                     }}
                                                 />
                                             </div>
                                         ))}
+                                        <button onClick={() => setEditSpec({ ...editSpec, data_entities: [...editSpec.data_entities, { name: 'NewEntity', fields: ['id'] }] })} className="w-full py-2 border border-dashed border-white/20 rounded-xl text-xs font-bold opacity-50 hover:opacity-100">+ Add Entity</button>
                                     </div>
                                 </div>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {/* Visual Grid Overview */}
-                                <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] hover:border-[rgb(var(--color-primary)/0.3)] transition-colors">
-                                    <div className="badge-gold mb-4 w-fit">Architecture Stack</div>
-                                    <div className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[rgb(var(--text-secondary))]">Backend</span>
-                                            <span className="font-bold text-[rgb(var(--text-primary))]">
-                                                {project.intent_spec.stack.backend || 'None'}
-                                                {project.intent_spec.stack.backend_version && <span className="text-[rgb(var(--color-primary))] ml-1">v{project.intent_spec.stack.backend_version}</span>}
-                                            </span>
+                            <div className="space-y-8">
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                    <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
+                                        <div className="badge-gold mb-6 uppercase tracking-[0.2em] text-[10px]">Architecture Stack</div>
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between items-center"><span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Backend</span><span className="text-sm font-bold text-[rgb(var(--color-primary))]">{project.intent_spec.stack.backend || 'None'} {project.intent_spec.backend_version && `(v${project.intent_spec.backend_version})`}</span></div>
+                                            <div className="flex justify-between items-center"><span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Frontend</span><span className="text-sm font-bold text-[rgb(var(--color-primary))]">{project.intent_spec.stack.frontend || 'None'} {project.intent_spec.frontend_version && `(v${project.intent_spec.frontend_version})`}</span></div>
+                                            <div className="flex justify-between items-center"><span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Database</span><span className="text-sm font-bold">{project.intent_spec.stack.database || 'None'} {project.intent_spec.database_version && `(v${project.intent_spec.database_version})`}</span></div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">API Type</span>
+                                                <span className="text-sm font-bold uppercase text-[rgb(var(--color-primary))]">{project.intent_spec.api_type || 'REST'}</span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Complexity</span>
+                                                <span className={`text-sm font-black capitalize ${project.intent_spec.complexity === 'full' ? 'text-purple-400' : project.intent_spec.complexity === 'standard' ? 'text-blue-400' : 'text-gray-400'}`}>
+                                                    {project.intent_spec.complexity}
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Auth</span>
+                                                <span className="text-sm font-black uppercase text-[rgb(var(--text-primary))]">
+                                                    {project.intent_spec.constraints?.auth_method || 'None'}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[rgb(var(--text-secondary))]">Frontend</span>
-                                            <span className="font-bold text-[rgb(var(--text-primary))]">
-                                                {project.intent_spec.stack.frontend || 'None'}
-                                                {project.intent_spec.stack.frontend_version && <span className="text-[rgb(var(--color-primary))] ml-1">v{project.intent_spec.stack.frontend_version}</span>}
-                                            </span>
+                                    </div>
+                                    <div className="p-6 bg-white/5 rounded-2xl border border-white/5 col-span-1 md:col-span-2 relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
+                                            <svg className="w-20 h-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[rgb(var(--text-secondary))]">Database</span>
-                                            <span className="font-bold text-[rgb(var(--text-primary))]">{project.intent_spec.stack.database || 'None'}</span>
+                                        <div className="flex justify-between items-center mb-6">
+                                            <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em]">AI Assumptions & Logic</div>
+                                            {project.intent_spec.vague_intent && <span className="text-[9px] bg-red-500/20 text-red-500 border border-red-500/20 px-2 py-0.5 rounded font-black uppercase">Vague Intent Detected</span>}
                                         </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[rgb(var(--text-secondary))]">Type</span>
-                                            <span className="font-bold text-[rgb(var(--text-primary))]">{project.intent_spec.project_type}</span>
+                                        <div className="text-sm leading-relaxed text-white/70 italic border-l-2 border-[rgb(var(--color-primary))]/30 pl-4 py-1">
+                                            "{project.intent_spec.explanation || "No specific assumptions recorded."}"
+                                        </div>
+                                        <div className="mt-8">
+                                            <div className="text-[9px] font-bold text-white/20 uppercase mb-3 tracking-widest">Inferred Features</div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {project.intent_spec.features.map((f, i) => (
+                                                    <span key={i} className="px-3 py-1 bg-white/5 border border-white/5 rounded-full text-[10px] uppercase font-black text-white/40 tracking-tighter">
+                                                        {f.replace('_', ' ')}
+                                                    </span>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] hover:border-[rgb(var(--color-primary))]/30 transition-colors">
-                                    <div className="text-xs font-bold text-[rgb(var(--color-primary))] uppercase tracking-widest mb-4">Derived Features</div>
-                                    <div className="flex flex-wrap gap-2">
-                                        {project.intent_spec.features.map((f, i) => (
-                                            <span key={i} className="px-3 py-1 bg-[rgb(var(--bg-primary))] border border-[rgb(var(--color-secondary))] text-[rgb(var(--color-secondary))] text-[10px] font-bold uppercase rounded-full">
-                                                {f}
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div className="p-6 bg-[rgb(var(--bg-secondary)/0.5)] rounded-2xl border border-[rgb(var(--border-primary))] hover:border-[rgb(var(--border-primary)/2)] transition-colors">
-                                    <div className="text-xs font-bold text-[rgb(var(--text-secondary))] uppercase tracking-widest mb-4">Core Data Models</div>
-                                    <div className="space-y-3">
-                                        {project.intent_spec.data_entities.slice(0, 4).map((entity, i) => (
-                                            <div key={i} className="flex flex-col">
-                                                <span className="font-bold text-sm text-[rgb(var(--text-primary))]">{entity.name}</span>
-                                                <span className="text-[10px] text-[rgb(var(--text-secondary))] truncate">{entity.fields.join(', ')}</span>
+                                <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
+                                    <div className="text-[10px] font-bold text-white/40 uppercase tracking-[0.3em] mb-6">Core Data Models</div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                                        {project.intent_spec.data_entities.map((entity, i) => (
+                                            <div key={i} className="p-4 bg-white/5 rounded-xl border border-white/5 hover:border-[rgb(var(--color-primary))]/20 transition-all">
+                                                <div className="font-bold text-sm mb-2 text-[rgb(var(--color-primary))]">{entity.name}</div>
+                                                <div className="flex flex-wrap gap-1">
+                                                    {entity.fields.slice(0, 5).map((f, fi) => (
+                                                        <span key={fi} className="text-[9px] text-white/40">{f}{fi < entity.fields.slice(0, 5).length - 1 ? ',' : ''}</span>
+                                                    ))}
+                                                    {entity.fields.length > 5 && <span className="text-[9px] text-[rgb(var(--color-primary))] opacity-50">+ {entity.fields.length - 5} more</span>}
+                                                </div>
                                             </div>
                                         ))}
-                                        {project.intent_spec.data_entities.length > 4 && (
-                                            <div className="text-[10px] text-[rgb(var(--color-primary))] font-bold italic">
-                                                + {project.intent_spec.data_entities.length - 4} more entities
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -642,23 +573,28 @@ export default function ProjectPage() {
                     </div>
                 )}
 
+                {/* Components Tab */}
                 {activeTab === 'components' && (
-                    <div className="animate-fade-in">
+                    <div className="animate-fade-in space-y-6">
                         <div className="flex justify-between items-center mb-6">
                             <h2 className="text-2xl font-bold">Architecture Graph</h2>
                         </div>
                         {project.component_plan ? (
                             <DependencyGraph components={project.component_plan.components} />
                         ) : (
-                            <p className="text-body text-[rgb(var(--text-secondary))]">Architecture plan not yet generated</p>
+                            <div className="flex flex-col items-center justify-center py-20 opacity-30">
+                                <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                                <p>Architecture plan not yet generated</p>
+                            </div>
                         )}
                     </div>
                 )}
 
+                {/* Code Tab */}
                 {activeTab === 'code' && (
-                    <div className="animate-fade-in">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="text-subtitle">Generated Source</h2>
+                    <div className="animate-fade-in space-y-6">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-bold">Generated Source</h2>
                         </div>
                         <CodePreview projectId={id} status={project.status} error={project.error_message} />
                     </div>

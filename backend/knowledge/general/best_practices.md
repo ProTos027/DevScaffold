@@ -1,43 +1,55 @@
 # General Best Practices
 
-## Environment Variables
-- Never hardcode secrets (API keys, DB passwords, SECRET_KEY)
-- Use `.env` file for development, environment variables for production
-- Python: `python-decouple` or `django-environ`
-- Node.js: `dotenv`
-- Java: `application.properties` with `${ENV_VAR}` syntax
+## Cross-Layer Connectivity (The Bridge)
+Rules for where Frontend and Backend must align perfectly.
 
-## .gitignore Essentials
-- `node_modules/`, `__pycache__/`, `.env`, `*.pyc`
-- `venv/`, `.venv/`, `env/`
-- IDE: `.idea/`, `.vscode/`, `*.swp`
-- Build artifacts: `dist/`, `build/`, `target/`
-- `*.sqlite3`, `*.db` (development databases)
+### 1. CORS Configuration (Canonical)
+**FastAPI (main.py):**
+```python
+from fastapi.middleware.cors import CORSMiddleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[config("FRONTEND_URL")], # derived from frontend_port contract
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
 
-## CORS Configuration
-- Always configure CORS for frontend-backend communication
-- Restrict origins in production (no `*` wildcard)
-- Allow credentials if using cookies/JWT in headers
+**Express (app.js):**
+```javascript
+const cors = require('cors');
+app.use(cors({
+  origin: process.env.FRONTEND_URL, // derived from frontend_port contract
+  credentials: true
+}));
+```
 
-## Authentication Patterns
-- JWT: Stateless, `Authorization: Bearer <token>`
-- Session: Server-side, cookie-based
-- OAuth2: For social login (Google, GitHub)
-- Always hash passwords (bcrypt, argon2)
+### 2. JWT Payload Contract
+**ALWAYS** include both `sub` and `id` in the payload.
+- `sub`: User identifier (usually email/username).
+- `id`: Internal Database Primary Key (Integer).
+- **Reason**: Routers need the `id` for fast DB lookups; `sub` alone is for identity.
 
-## API Design
-- RESTful: Use HTTP methods correctly (GET read, POST create, PUT update, DELETE remove)
-- Consistent error responses: `{"detail": "Error message"}`
-- Pagination for list endpoints
-- Version your API: `/api/v1/`
+### 3. Error Response Shapes (Neutral)
+**NEVER** assume a specific error key. Always follow the framework convention:
+- **FastAPI/Django**: `{"detail": "..."}`
+- **Express**: `{"error": "..."}`
 
-## Database
-- Use migrations for schema changes
-- Add indexes for frequently queried fields
-- Use transactions for multi-table operations
-- Never store passwords in plain text
+## Python/SQLAlchemy Time Management
+**NEVER** use `datetime.utcnow()` (deprecated in Python 3.12).
+- **Python**: `datetime.now(timezone.utc)`
+- **SQLAlchemy**: `Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))`
 
-## Project README
-- Include: Description, setup instructions, environment variables
-- include: How to run development server
-- Include: API documentation or link to Swagger/OpenAPI
+## Environment Integrity
+- **MANDATORY**: Always generate a `.env.example` file documenting every key.
+- **NEVER** hardcode secrets in source code or `ProjectManifest`.
+- **ALWAYS** use `python-decouple` (Python) or `dotenv` (Node) for config.
+
+## .gitignore
+Ensure these are always present to prevent credential leaks:
+- `.env`
+- `node_modules/` / `venv/`
+- `__pycache__/`
+- `*.sqlite3` / `*.db`
+

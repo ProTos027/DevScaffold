@@ -49,10 +49,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=150, blank=True)
     last_name = models.CharField(max_length=150, blank=True)
     
-    # API Keys (encrypted)
-    openai_api_key_encrypted = models.TextField(blank=True, null=True)
-    anthropic_api_key_encrypted = models.TextField(blank=True, null=True)
-    
     # GitHub OAuth
     github_access_token_encrypted = models.TextField(blank=True, null=True)
     github_username = models.CharField(max_length=255, blank=True, null=True)
@@ -90,36 +86,6 @@ class User(AbstractBaseUser, PermissionsMixin):
             raise ValueError("ENCRYPTION_KEY not set in settings")
         return Fernet(settings.ENCRYPTION_KEY)
     
-    def set_openai_key(self, api_key: str):
-        """Encrypt and store OpenAI API key."""
-        if api_key:
-            cipher = self._get_cipher()
-            self.openai_api_key_encrypted = cipher.encrypt(api_key.encode()).decode()
-        else:
-            self.openai_api_key_encrypted = None
-    
-    def get_openai_key(self) -> str | None:
-        """Decrypt and return OpenAI API key."""
-        if self.openai_api_key_encrypted:
-            cipher = self._get_cipher()
-            return cipher.decrypt(self.openai_api_key_encrypted.encode()).decode()
-        return None
-    
-    def set_anthropic_key(self, api_key: str):
-        """Encrypt and store Anthropic API key."""
-        if api_key:
-            cipher = self._get_cipher()
-            self.anthropic_api_key_encrypted = cipher.encrypt(api_key.encode()).decode()
-        else:
-            self.anthropic_api_key_encrypted = None
-    
-    def get_anthropic_key(self) -> str | None:
-        """Decrypt and return Anthropic API key."""
-        if self.anthropic_api_key_encrypted:
-            cipher = self._get_cipher()
-            return cipher.decrypt(self.anthropic_api_key_encrypted.encode()).decode()
-        return None
-    
     def set_github_token(self, token: str):
         """Encrypt and store GitHub access token."""
         if token:
@@ -146,14 +112,18 @@ class APIKey(models.Model):
     
     PROVIDER_CHOICES = [
         ('gemini', 'Google Gemini'),  # Currently supported
-        ('openai', 'OpenAI'),  # Reserved for future
-        ('anthropic', 'Anthropic'),  # Reserved for future
     ]
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='api_keys')
     provider = models.CharField(max_length=20, choices=PROVIDER_CHOICES)
     name = models.CharField(max_length=100)  # User-defined name for the key
     api_key_encrypted = models.TextField()
+    is_active = models.BooleanField(default=True)
+    
+    # Rotation & Quota tracking
+    last_used_at = models.DateTimeField(null=True, blank=True)
+    quota_exhausted_until = models.DateTimeField(null=True, blank=True)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     

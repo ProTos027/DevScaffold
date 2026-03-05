@@ -20,8 +20,6 @@ class Project(models.Model):
         ('review_required', 'Review Required'),
         ('validating', 'Validating'),
         ('planning', 'Building Component Plan'),
-        ('graph_building', 'Building Dependency Graph'),
-        ('folder_contracts', 'Generating Folder Contracts'),
         ('code_generation', 'Generating Code'),
         ('assembling', 'Assembling Repository'),
         ('completed', 'Completed'),
@@ -106,32 +104,38 @@ class IntentSpec(models.Model):
     """
     User-editable Intent Specification.
     This is the single source of truth for project generation.
+    Aligned with IntentSpecSchema in backend/pipeline/schemas.py.
     """
     
     project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='intent_spec')
     
-    # Schema fields (stored as JSON)
-    project_type = models.CharField(max_length=50)  # e.g., "web_app"
-    complexity = models.CharField(
-        max_length=20,
-        choices=[('minimal', 'Minimal'), ('standard', 'Standard'), ('full', 'Full')],
-        default='minimal'
-    )
+    # Schema fields
+    project_type = models.CharField(max_length=100)  # e.g., "url_shortener"
     
     # Stack configuration (JSON)
-    stack = models.JSONField(default=dict)  # {frontend, backend, database}
+    stack = models.JSONField(default=dict)  # {backend: {framework, version}, frontend: {...}, database: {...}}
     
-    # Features list (JSON)
+    api_type = models.CharField(
+        max_length=20,
+        choices=[('rest', 'REST'), ('graphql', 'GraphQL'), ('none', 'None')],
+        default='rest'
+    )
+    
     features = models.JSONField(default=list)  # ["authentication", "user_profiles", ...]
     
-    # Architecture (JSON)
-    architecture = models.JSONField(default=dict)  # {style, api_type}
+    architecture = models.CharField(
+        max_length=20,
+        choices=[('monolith', 'Monolith'), ('microservices', 'Microservices')],
+        default='microservices'
+    )
     
-    # Data entities (JSON)
     data_entities = models.JSONField(default=list)  # [{name, fields}, ...]
     
-    # Constraints (JSON)
-    constraints = models.JSONField(default=dict)  # {auth_method, ...}
+    auth_method = models.CharField(
+        max_length=20,
+        choices=[('jwt', 'JWT'), ('session', 'Session'), ('none', 'None')],
+        default='none'
+    )
     
     # Resilience flags
     vague_intent = models.BooleanField(default=False)
@@ -150,31 +154,33 @@ class IntentSpec(models.Model):
         return f"Intent Spec for {self.project}"
     
     def to_dict(self):
-        """Convert to dictionary matching the schema."""
+        """Convert to dictionary matching the IntentSpecSchema."""
         return {
             'project_type': self.project_type,
-            'complexity': self.complexity,
             'stack': self.stack,
+            'api_type': self.api_type,
             'features': self.features,
             'architecture': self.architecture,
             'data_entities': self.data_entities,
-            'constraints': self.constraints,
+            'auth_method': self.auth_method,
             'vague_intent': self.vague_intent,
             'explanation': self.explanation,
         }
     
     @classmethod
     def from_dict(cls, project, data: dict):
-        """Create IntentSpec from dictionary."""
+        """Create IntentSpec from dictionary matching IntentSpecSchema."""
         return cls.objects.create(
             project=project,
             project_type=data.get('project_type', 'web_app'),
-            complexity=data.get('complexity', 'minimal'),
             stack=data.get('stack', {}),
+            api_type=data.get('api_type', 'rest'),
             features=data.get('features', []),
-            architecture=data.get('architecture', {}),
+            architecture=data.get('architecture', 'microservices'),
             data_entities=data.get('data_entities', []),
-            constraints=data.get('constraints', {}),
+            auth_method=data.get('auth_method', 'none'),
+            vague_intent=data.get('vague_intent', False),
+            explanation=data.get('explanation', ""),
         )
 
 
@@ -186,8 +192,8 @@ class ComponentPlan(models.Model):
     
     project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='component_plan')
     
-    # Components list (JSON)
-    # [{id, type, responsibilities, depends_on, public_interfaces, data_models}, ...]
+    # Components list (JSON) - Aligned with Component Pydantic schema
+    # [{id, type, folder, files, responsibilities, depends_on, public_interfaces, data_models}, ...]
     components = models.JSONField(default=list)
     
     # Metadata
@@ -206,76 +212,6 @@ class ComponentPlan(models.Model):
         return {'components': self.components}
 
 
-class DependencyGraph(models.Model):
-    """
-    System-generated Dependency Graph.
-    Built from ComponentPlan, represents component dependencies.
-    """
-    
-    project = models.OneToOneField(Project, on_delete=models.CASCADE, related_name='dependency_graph')
-    
-    # Graph structure (JSON)
-    nodes = models.JSONField(default=list)  # ["user_model", "auth_service", ...]
-    edges = models.JSONField(default=list)  # [{from, to}, ...]
-    
-    # Topological sort order (JSON)
-    build_order = models.JSONField(default=list)  # ["user_model", "auth_service", ...]
-    
-    # Metadata
-    generated_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        verbose_name = 'Dependency Graph'
-        verbose_name_plural = 'Dependency Graphs'
-    
-    def __str__(self):
-        return f"Dependency Graph for {self.project}"
-    
-    def to_dict(self):
-        """Convert to dictionary."""
-        return {
-            'nodes': self.nodes,
-            'edges': self.edges,
-            'build_order': self.build_order,
-        }
-
-
-class FolderContract(models.Model):
-    """
-    System-generated Folder Contract.
-    Maps components to folder structure and files.
-    """
-    
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='folder_contracts')
-    component_id = models.CharField(max_length=100)
-    folder_path = models.CharField(max_length=500)
-    
-    # Architectural Metadata
-    responsibilities = models.JSONField(default=list)  # ["Handle user login", ...]
-    dependencies = models.JSONField(default=list)  # ["auth_service", ...]
-    
-    # Files list (JSON)
-    files = models.JSONField(default=list)  # ["routes.py", "service.py", ...]
-    
-    # Interfaces exposed (JSON)
-    interfaces = models.JSONField(default=list)  # ["POST /auth/login", ...]
-    
-    # Data models used (JSON)
-    models_used = models.JSONField(default=list)  # ["User", ...]
-    
-    # Generated code (JSON) - {filename: content}
-    generated_code = models.JSONField(default=dict)
-    
-    # Metadata
-    generated_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        verbose_name = 'Folder Contract'
-        verbose_name_plural = 'Folder Contracts'
-        unique_together = ['project', 'component_id']
-    
-    def __str__(self):
-        return f"{self.component_id} - {self.folder_path}"
 
 
 class ValidationError(models.Model):

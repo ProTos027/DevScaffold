@@ -5,24 +5,86 @@ These define the strict structure for Intent Specs, Component Plans, etc.
 from pydantic import BaseModel, Field
 from typing import List, Dict, Optional, Literal
 
-
+# for file generation
 class GeneratedFile(BaseModel):
     """Schema for a single generated file."""
     path: str
     content: str
     language: str
 
+class CrossLayerContractSchema(BaseModel):
+    """Typed synchronization contract between generation phases."""
+    api_base_url: str = Field(
+        default="http://localhost:8000",
+        description="The full base URL the frontend uses to reach the backend, e.g. 'http://localhost:8000'"
+    )
+    auth_token_field: str = Field(
+        default="access",
+        description="The EXACT JSON key in the login response that holds the bearer token, e.g. 'access'. Frontend MUST read response.data[this_field]."
+    )
+    auth_header_format: str = Field(
+        default="Bearer {token}",
+        description="The format of the Authorization header, e.g. 'Bearer {token}'"
+    )
+    db_url_env_var: str = Field(
+        default="DATABASE_URL",
+        description="The .env variable name for the database connection string"
+    )
+    frontend_port: str = Field(
+        default="",
+        description="Frontend dev server port: '5173' for Vite, '3000' for CRA/Next"
+    )
+    websocket_library: str = Field(
+        default="",
+        description="'native' if backend uses raw WebSocket (no SockJS), 'sockjs' if using SockJS+STOMP. Frontend MUST use matching client library."
+    )
+    extra: dict = Field(
+        default_factory=dict,
+        description="Any additional phase-specific facts, e.g. websocket_url, storage_bucket"
+    )
 
 class GeneratedFilesResponse(BaseModel):
     """Response schema for multiple generated files."""
     files: List[GeneratedFile]
+    implementation_notes: Dict[str, str] = Field(
+        default_factory=dict,
+        description=(
+            "Decisions made in this phase for downstream phases to consume. "
+            "MANDATORY keys: 'packages_used' (comma-separated list of every external package imported, e.g. 'pinia,pinia-plugin-persistedstate,axios'), "
+            "'port' (server port), 'db_handler' (e.g. 'pg', 'sqlalchemy'). "
+            "The infrastructure phase reads 'packages_used' verbatim to build package.json / requirements.txt."
+        )
+    )
+    interface_contracts: str = Field(
+        default="",
+        description="Markdown summary of the ACTUAL implementation shapes: Pydantic models (with all fields), specific DTOs, and full endpoint signatures. Downstream phases MUST use these exact shapes."
+    )
+    cross_layer_contracts: CrossLayerContractSchema = Field(
+        default_factory=CrossLayerContractSchema,
+        description="Typed synchronization facts for downstream phases. Populate ALL fields accurately."
+    )
 
+# for intent spec
+class StackComponent(BaseModel):
+    """Optional component of the technology stack."""
+    framework: Optional[str] = None
+    version: Optional[str] = None
+
+class BackendComponent(BaseModel):
+    """Required backend component of the technology stack."""
+    framework: str = Field(..., description="Mandatory backend framework name")
+    version: Optional[str] = None
+
+class StackSchema(BaseModel):
+    """Typed technology stack specification."""
+    backend: BackendComponent = Field(..., description="Backend is mandatory")
+    frontend: StackComponent = Field(default_factory=StackComponent)
+    database: StackComponent = Field(default_factory=StackComponent)
 
 class DataEntity(BaseModel):
     """Represents a data model/entity."""
     name: str
     fields: List[str] = Field(default_factory=list)
-
 
 class IntentSpecSchema(BaseModel):
     """
@@ -33,32 +95,29 @@ class IntentSpecSchema(BaseModel):
         ...,
         description="Detailed project type (e.g., 'url_shortener', 'todo_app', 'ecommerce_api')"
     )
-    complexity: Literal['minimal', 'standard', 'full'] = 'standard'
     
-    stack: Dict[str, Optional[str]] = Field(
-        default_factory=dict,
-        description="Technology stack: backend (fastapi|django|springboot|express|flask|rails), frontend (react|vue|nextjs|null), database (postgres|mysql|sqlite|mongodb|null)"
+    stack: StackSchema = Field(
+        default_factory=StackSchema,
+        description="Technology stack details including frameworks and versions."
     )
     
+    api_type: Literal['rest', 'graphql', 'none'] = Field(
+        default='rest',
+        description="Type of API to generate for the backend"
+    )
     features: List[str] = Field(
         default_factory=list,
-        description="List of feature names like authentication, url_shortening, blog_posts, etc - ONLY features user explicitly requested"
+        description="List of feature names like authentication, user_profiles, file_upload, etc - User can also add custom feature strings"
     )
     
-    architecture: Dict[str, str] = Field(
-        default_factory=dict,
-        description="Architecture style (monolith|microservices) and API type (rest|graphql)"
-    )
+    architecture: Literal['monolith', 'microservices'] = 'microservices'
     
     data_entities: List[DataEntity] = Field(
         default_factory=list,
         description="List of data models/entities specific to the project type"
     )
     
-    constraints: Dict[str, Optional[str]] = Field(
-        default_factory=dict,
-        description="Additional constraints like auth_method (jwt|session|null)"
-    )
+    auth_method: Literal['jwt', 'session', 'none'] = 'none'
     
     vague_intent: bool = Field(
         default=False,
@@ -70,60 +129,38 @@ class IntentSpecSchema(BaseModel):
         description="Short explanation of why the prompt was considered vague and what assumptions were made"
     )
 
-
+# for component plan
 class Component(BaseModel):
     """Represents a single component in the plan."""
     id: str
     type: Literal['backend_module', 'frontend_component', 'data_model', 'middleware']
+    folder: str = ""
+    files: List[str] = Field(default_factory=list)
     responsibilities: List[str] = Field(default_factory=list)
     depends_on: List[str] = Field(default_factory=list)
     public_interfaces: List[str] = Field(default_factory=list)
     data_models: List[str] = Field(default_factory=list)
 
-
 class ComponentPlanSchema(BaseModel):
     """Schema for Component Plan."""
     components: List[Component]
 
-
 class DependencyEdge(BaseModel):
-    """Represents a dependency edge."""
+    """Represents a dependency edge in a graph."""
     from_component: str
     to_component: str
 
-
-class DependencyGraphSchema(BaseModel):
-    """Schema for Dependency Graph."""
-    nodes: List[str]
-    edges: List[DependencyEdge]
+class CyclicDependencyError(Exception):
+    """Raised when a cyclic dependency is detected."""
+    pass
 
 
-class FolderContractSchema(BaseModel):
-    """Schema for Folder Contract - Architectural Blueprint for high consistency."""
-    component_id: str
-    folder: str  # Initial proposed folder
-    files: List[str]  # List of filenames expected (e.g., ["models.py", "serializers.py"])
-    responsibilities: List[str] = Field(default_factory=list)
-    dependencies: List[str] = Field(default_factory=list)
-    interfaces: List[str] = Field(default_factory=list)
-    models_used: List[str] = Field(default_factory=list)
-
-
-class FolderContractListSchema(BaseModel):
-    """List of all folder contracts for a project."""
-    contracts: List[FolderContractSchema]
-
-
-# Export all schemas
+# Export only top-level schemas used externally
 __all__ = [
-    'DataEntity',
     'IntentSpecSchema',
-    'Component',
     'ComponentPlanSchema',
-    'DependencyEdge',
-    'DependencyGraphSchema',
-    'FolderContractSchema',
-    'FolderContractListSchema',
-    'GeneratedFile',
     'GeneratedFilesResponse',
+    'DataEntity',
+    'DependencyEdge',
+    'CyclicDependencyError',
 ]

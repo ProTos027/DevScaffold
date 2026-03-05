@@ -88,14 +88,6 @@ DATABASES = {
     }
 }
 
-# SQLite configuration (for testing only):
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': BASE_DIR / 'db.sqlite3',
-#     }
-# }
-
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
@@ -199,7 +191,7 @@ ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_UNIQUE_EMAIL = True  
 SOCIALACCOUNT_AUTO_SIGNUP = True
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
-ACCOUNT_ADAPTER = 'accounts.account_adapter.NoUsernameAccountAdapter'
+ACCOUNT_ADAPTER = 'accounts.adapters.AccountAdapter'
 
 SOCIALACCOUNT_PROVIDERS = {
     'github': {
@@ -227,3 +219,7 @@ REPO_RETENTION_HOURS = config('REPO_RETENTION_HOURS', default=24, cast=int)
 ENCRYPTION_KEY = config('ENCRYPTION_KEY', default='').encode() if config('ENCRYPTION_KEY', default='') else None
 
 
+# Site Configuration
+SITE_DOMAIN = config('SITE_DOMAIN', default='localhost:8000')
+SITE_NAME = config('SITE_NAME', default='DevScaffold')
+FRONTEND_URL = config('FRONTEND_URL', default='http://localhost:5173')

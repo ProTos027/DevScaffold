@@ -37,7 +37,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         # Only return projects owned by the authenticated user
         return Project.objects.filter(user=self.request.user).select_related(
-            'intent_spec', 'component_plan', 'dependency_graph'
+            'intent_spec', 'component_plan'
         ).prefetch_related('validation_errors')
     
     def get_serializer_class(self):

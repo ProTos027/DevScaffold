@@ -1,3 +1,4 @@
+from .models import APIKey
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
@@ -48,48 +49,23 @@ class RegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-class LegacyAPIKeySerializer(serializers.Serializer):
-    """Legacy serializer for storing API keys (OpenAI, Anthropic)."""
-    
-    openai_api_key = serializers.CharField(required=False, allow_blank=True, write_only=True)
-    anthropic_api_key = serializers.CharField(required=False, allow_blank=True, write_only=True)
-    
-    def update(self, instance, validated_data):
-        if 'openai_api_key' in validated_data:
-            instance.set_openai_key(validated_data['openai_api_key'])
-        if 'anthropic_api_key' in validated_data:
-            instance.set_anthropic_key(validated_data['anthropic_api_key'])
-        instance.save()
-        return instance
-
-
 class UserProfileSerializer(serializers.ModelSerializer):
     """Serializer for user profile with API key status."""
     
-    has_openai_key = serializers.SerializerMethodField()
-    has_anthropic_key = serializers.SerializerMethodField()
     has_github_token = serializers.SerializerMethodField()
     
     class Meta:
         model = User
         fields = (
             'id', 'email', 'username', 'first_name', 'last_name', 'github_username',
-            'has_openai_key', 'has_anthropic_key', 'has_github_token',
+            'has_github_token',
             'date_joined', 'last_login'
         )
         read_only_fields = ('id', 'email', 'username', 'date_joined', 'last_login', 'github_username')
     
-    def get_has_openai_key(self, obj):
-        return bool(obj.openai_api_key_encrypted)
-    
-    def get_has_anthropic_key(self, obj):
-        return bool(obj.anthropic_api_key_encrypted)
-    
     def get_has_github_token(self, obj):
         return bool(obj.github_access_token_encrypted)
 
-
-from .models import APIKey
 
 class APIKeySerializer(serializers.ModelSerializer):
     """

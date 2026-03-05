@@ -1,45 +1,103 @@
 # Django Framework Reference
 
-## Project Structure
-- `manage.py` — CLI entry point
-- `settings.py` — All config (INSTALLED_APPS, MIDDLEWARE, DATABASES)
-- `urls.py` — URL routing with `path()` (Django 2.0+)
-- `wsgi.py` / `asgi.py` — Deployment entry points
+## Directory Layout (REQUIRED — Do not deviate)
+```
+project_root/
+├── manage.py
+├── {project_name}/               ← Django project package
+│   ├── settings.py
+│   ├── urls.py                   ← Root URL conf, includes all app urls
+│   ├── wsgi.py
+│   └── asgi.py
+├── apps/                         ← ALL Django apps live here
+│   └── {app_name}/              ← One app per domain (e.g. users, products)
+│       ├── __init__.py
+│       ├── admin.py
+│       ├── apps.py
+│       ├── models.py             ← ONLY models here (no business logic)
+│       ├── serializers.py        ← DRF serializers ONLY
+│       ├── views.py              ← ViewSets or APIViews ONLY
+│       ├── urls.py               ← App-level URLConf
+│       ├── services.py           ← Business logic (called by views, NOT models)
+│       └── migrations/
+│           └── __init__.py      ← MANDATORY
+├── requirements.txt
+└── .env
+```
 
-## Version Compatibility
-- Django 5.x: Python 3.10+, `path()` routing, async views native
-- Django 4.2 LTS: Python 3.8+, last version supporting Python 3.8/3.9
-- Django 3.x: `url()` deprecated, use `path()` and `re_path()`
+## MANDATORY: Custom User Model
+**NEVER use the default `django.contrib.auth.models.User` directly.**
+1. Create an `accounts` (or `users`) app first.
+2. Extend `AbstractUser`:
+```python
+from django.contrib.auth.models import AbstractUser
+class User(AbstractUser):
+    # Add custom fields here
+    pass
+```
+3. Register in `settings.py`: `AUTH_USER_MODEL = 'accounts.User'`
+*Failure to do this before the first migration will break the project.*
 
-## Models
-- All models inherit `models.Model`
-- Use `models.CharField`, `models.TextField`, `models.IntegerField`, etc.
-- ForeignKey requires `on_delete` (CASCADE, SET_NULL, PROTECT)
-- Django 5.x: `GeneratedField` for computed columns
-- Always add `__str__` method for admin display
-- Use `Meta` class for ordering, verbose names, constraints
+## App Registration (Nested Layout)
+Since apps live in `apps/`, their `AppConfig` path is non-standard.
+In `settings.py`:
+```python
+INSTALLED_APPS = [
+    ...,
+    'apps.accounts.apps.AccountsConfig', 
+    'apps.projects.apps.ProjectsConfig',
+]
+```
 
-## REST Framework (DRF)
-- Serializers: `ModelSerializer` for CRUD, `Serializer` for custom
-- ViewSets: `ModelViewSet` for full CRUD, `@action` for custom endpoints
-- Router: `DefaultRouter` auto-generates URL patterns
-- Permissions: `IsAuthenticated`, `IsAdminUser`, custom permission classes
-- Pagination: Set in `REST_FRAMEWORK` settings
+### Interface Contract Rules
+- Views MUST call `services.py` for logic — NO business logic in views.py.
+- Models are data-only — no logic except `__str__` and `Meta`.
+- `apps/{app}/urls.py` registers ViewSet routes via `DefaultRouter`.
+- All DRF ViewSets inherit from `ModelViewSet` or `GenericViewSet`.
+- `settings.py` uses `python-decouple` `config()` for secrets.
 
-## Authentication
-- `django-allauth` for social auth
-- `djangorestframework-simplejwt` for JWT
-- Token in Authorization header: `Bearer <token>`
+## Authentication (DRF + JWT)
+Use `djangorestframework-simplejwt`.
 
-## Database
-- Default: SQLite (development)
-- Production: PostgreSQL via `psycopg2-binary`
-- Migrations: `makemigrations` then `migrate`
-- Never edit migration files manually
+**1. Settings Config:**
+```python
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
-## Settings Best Practices
-- Use `python-decouple` or `django-environ` for env vars
-- `SECRET_KEY`: Always from environment, never hardcoded
-- `DEBUG = False` in production
-- `ALLOWED_HOSTS`: Must be set in production
-- `CORS_ALLOWED_ORIGINS`: Use `django-cors-headers`
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+```
+
+**2. Token Endpoints (Root urls.py):**
+```python
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+```
+
+**3. Protecting Views:**
+```python
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import permission_classes
+
+@permission_classes([IsAuthenticated])
+class ProjectViewSet(ModelViewSet):
+    ...
+```
+
+## Settings Structure (Examples)
+Always use `python-decouple`:
+```python
+from decouple import config
+
+DEBUG = config('DEBUG', default=False, cast=bool)
+DATABASES = {
+    'default': config('DATABASE_URL', cast=db_url) # or split fields
+}
+CORS_ALLOWED_ORIGINS = config('CORS_ALLOWED_ORIGINS').split(',')
+```

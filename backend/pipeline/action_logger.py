@@ -1,7 +1,5 @@
 """
 Action Logger utility for pipeline agents.
-Provides a simple interface for agents to log actions and 
-read previous action summaries for pipeline consistency.
 """
 from projects.models import PipelineActionLog
 
@@ -31,22 +29,32 @@ class ActionLogger:
     
     def get_summary(self) -> str:
         """
-        Returns a concise text summary of all actions for injection into agent prompts.
-        Downstream agents use this to understand what upstream agents decided.
+        Returns a structured text summary of all actions for prompt injection.
         """
         logs = self.get_log()
         if not logs:
-            return "No previous pipeline actions recorded."
+            return "## PROJECT TIMELINE\nNo previous pipeline actions recorded."
         
-        lines = []
+        lines = ["## PROJECT TIMELINE (PROCESS HISTORY)"]
+        lines.append("> [!NOTE]")
+        lines.append("> Below is the chronological sequence of actions taken by other agents. Refer to this to understand the 'why' and context of previous decisions.\n")
+        
         for log in logs:
             detail_str = ""
-            if log['details']:
-                # Compact key details for prompt injection
-                key_items = [f"{k}={v}" for k, v in log['details'].items() if not isinstance(v, (dict, list))]
-                if key_items:
-                    detail_str = f" ({', '.join(key_items[:5])})"
-            lines.append(f"[{log['stage']}] {log['agent']}: {log['action']}{detail_str}")
+            details = log.get('details', {})
+            if details:
+                # 1. Harvest explicit decisions/choices from agents
+                decisions = details.get('choices', {})
+                decision_items = [f"{k}={v}" for k, v in decisions.items()]
+                
+                # 2. Add other scalar facts
+                fact_items = [f"{k}: {v}" for k, v in details.items() if not isinstance(v, (dict, list)) and k != 'choices']
+                
+                all_facts = decision_items + fact_items
+                if all_facts:
+                    detail_str = f" - Facts: {', '.join(all_facts[:10])}"
+                    
+            lines.append(f"- **[{log['stage'].upper()}]** {log['agent']} -> {log['action']}{detail_str}")
         
         return "\n".join(lines)
     
