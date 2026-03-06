@@ -40,6 +40,11 @@ Your only job: convert a natural language project description into a valid Inten
 - Write FK fields explicitly: use `author_id: int`, never just "author".
 - Do NOT abbreviate field names (e.g. write `membership_type` not `mem_typ`).
 
+── CREATIVE VISION EXTRACTION ───────────────────────────────────────────────
+- Capture the unique "soul", stylistic flavor, and non-structural functional nuances of the prompt in the `creative_vision` field.
+- Examples: "90s retro terminal aesthetic", "dark space theme with neon accents", "minimalist Zen-like interace", "highly interactive with many micro-animations".
+- If the user specifies any unique logic or "vibes", record them here verbatim or paraphrased for downstream creative agents.
+
 ── STACK RULES ──────────────────────────────────────────────────────────────
 - Framework mapping: Java/Spring Boot → "springboot" | FastAPI → "fastapi" | Express/Node → "express" | Django → "django"
 - Support: React, Vue, Svelte, Next.js for frontend.
@@ -50,6 +55,12 @@ Your only job: convert a natural language project description into a valid Inten
 If a "DOMAIN KNOWLEDGE" section appears, treat it as MANDATORY GUIDELINES for domain logic.
 - **Precedence**: RAG knowledge overrides your general training for naming/conventions.
 - **Constraint**: RAG knowledge CANNOT override structural rules (e.g., mandatory `id` fields or Cascade Rules).
+
+── THEME RULES (CRITICAL) ──────────────────────────────────────────────────
+- **DARK MODE ONLY**: DevScaffold exclusively supports dark mode. 
+- Do NOT include features like "light mode support", "theme toggling", or "day/night switcher".
+- If the user asks for "light mode", ignore it and define a "polished dark theme" in `creative_vision` instead.
+- The `creative_vision` should only contain stylistic details for dark-themed aesthetics (e.g., "Deep space background with gold accents").
 """
 
 
@@ -95,7 +106,7 @@ def build_spec_from_prompt(
             config={
                 "system_instruction": system_instruction,
                 "response_mime_type": "application/json",
-                "response_json_schema": IntentSpecSchema.model_json_schema(),
+                "response_schema": IntentSpecSchema,   # Pass the Pydantic class directly — SDK enforces the schema
             },
             on_exhaustion=on_exhaustion
         )

@@ -2,7 +2,7 @@
 Pydantic models/schemas for the DevScaffold pipeline.
 These define the strict structure for Intent Specs, Component Plans, etc.
 """
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Dict, Optional, Literal
 
 # for file generation
@@ -14,34 +14,52 @@ class GeneratedFile(BaseModel):
 
 class CrossLayerContractSchema(BaseModel):
     """Typed synchronization contract between generation phases."""
-    api_base_url: str = Field(
+    api_base_url: Optional[str] = Field(
         default="http://localhost:8000",
         description="The full base URL the frontend uses to reach the backend, e.g. 'http://localhost:8000'"
     )
-    auth_token_field: str = Field(
+    auth_token_field: Optional[str] = Field(
         default="access",
         description="The EXACT JSON key in the login response that holds the bearer token, e.g. 'access'. Frontend MUST read response.data[this_field]."
     )
-    auth_header_format: str = Field(
+    auth_header_format: Optional[str] = Field(
         default="Bearer {token}",
         description="The format of the Authorization header, e.g. 'Bearer {token}'"
     )
-    db_url_env_var: str = Field(
+    db_url_env_var: Optional[str] = Field(
         default="DATABASE_URL",
         description="The .env variable name for the database connection string"
     )
-    frontend_port: str = Field(
+    frontend_port: Optional[str] = Field(
         default="",
         description="Frontend dev server port: '5173' for Vite, '3000' for CRA/Next"
     )
-    websocket_library: str = Field(
+    websocket_library: Optional[str] = Field(
         default="",
         description="'native' if backend uses raw WebSocket (no SockJS), 'sockjs' if using SockJS+STOMP. Frontend MUST use matching client library."
     )
-    extra: dict = Field(
-        default_factory=dict,
-        description="Any additional phase-specific facts, e.g. websocket_url, storage_bucket"
-    )
+
+    @model_validator(mode="before")
+    @classmethod
+    def coerce_types_and_defaults(cls, values):
+        """Coerce integer values and None to defaults/strings so Gemini's outputs don't fail."""
+        defaults = {
+            "api_base_url": "http://localhost:8000",
+            "auth_token_field": "access",
+            "auth_header_format": "Bearer {token}",
+            "db_url_env_var": "DATABASE_URL",
+            "frontend_port": "",
+            "websocket_library": "",
+        }
+        if isinstance(values, dict):
+            for field, default in defaults.items():
+                val = values.get(field)
+                if val is None:
+                    values[field] = default
+                elif not isinstance(val, str):
+                    # Coerce int/other to str (e.g. port 5173 -> "5173")
+                    values[field] = str(val)
+        return values
 
 class GeneratedFilesResponse(BaseModel):
     """Response schema for multiple generated files."""
@@ -80,6 +98,24 @@ class StackSchema(BaseModel):
     backend: BackendComponent = Field(..., description="Backend is mandatory")
     frontend: StackComponent = Field(default_factory=StackComponent)
     database: StackComponent = Field(default_factory=StackComponent)
+
+    @model_validator(mode="before")
+    @classmethod
+    def coerce_strings_to_objects(cls, values):
+        """Handle cases where Gemini returns a string instead of a dictionary for stack components."""
+        if isinstance(values, dict):
+            # Coerce backend
+            if 'backend' in values and isinstance(values['backend'], str):
+                values['backend'] = {"framework": values['backend']}
+            
+            # Coerce frontend
+            if 'frontend' in values and isinstance(values['frontend'], str):
+                values['frontend'] = {"framework": values['frontend']}
+                
+            # Coerce database
+            if 'database' in values and isinstance(values['database'], str):
+                values['database'] = {"framework": values['database']}
+        return values
 
 class DataEntity(BaseModel):
     """Represents a data model/entity."""
@@ -127,6 +163,11 @@ class IntentSpecSchema(BaseModel):
     explanation: str = Field(
         default="",
         description="Short explanation of why the prompt was considered vague and what assumptions were made"
+    )
+    
+    creative_vision: str = Field(
+        default="",
+        description="Captures the unique 'soul' and dark-themed stylistic/functional nuances of the prompt (DevScaffold is DARK MODE ONLY). Used to guide downstream creative decisions."
     )
 
 # for component plan

@@ -16,7 +16,7 @@ class AccountAdapter(DefaultAccountAdapter):
     """
     def get_login_redirect_url(self, request):
         """
-        Redirect to frontend with JWT tokens after login.
+        Redirect to frontend with JWT tokens after standard email/password login.
         """
         if request.user.is_authenticated:
             refresh = RefreshToken.for_user(request.user)
@@ -58,23 +58,15 @@ class CustomSocialAccountAdapter(DefaultSocialAccountAdapter):
         
         return user
     
-    def save_user(self, request, sociallogin, form=None):
-        """
-        Override to save social user.
-        """
-        user = sociallogin.user
-        user.set_unusable_password()
-        # Don't call get_account_adapter().save_user() which tries to set username
-        # Just save the social login directly
-        sociallogin.save(request)
-        return user
-    
     def get_login_redirect_url(self, request):
         """
         After successful GitHub OAuth, redirect to frontend with JWT tokens.
+        If the user is not yet authenticated on the request, fall back to
+        the standard allauth redirect so we don't generate tokens for anon users.
         """
+        if not request.user.is_authenticated:
+            return super().get_login_redirect_url(request)
         # Generate JWT tokens for the authenticated user
         refresh = RefreshToken.for_user(request.user)
-        
         # Redirect to frontend
         return f"{settings.FRONTEND_URL}/auth/github/callback?access={refresh.access_token}&refresh={refresh}"

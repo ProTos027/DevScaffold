@@ -41,11 +41,12 @@ class ProjectManifest:
                 "stack": intent.get('stack'),
                 "api_type": intent.get('api_type'),
                 "auth_method": intent.get('auth_method'),
+                "creative_vision": intent.get('creative_vision'),
                 "complexity": 'minimal'
             }
             # Invisibility: Only keep active technical facts
             self.data['context'] = {k: v for k, v in context.items() if v}
-            logger.info(" Manifest: Component Plan registered. Intent pruned.")
+            logger.info(" Manifest: Component Plan registered. Intent pruned and Creative Vision preserved.")
 
     def register_generation_result(self, result: GeneratedFilesResponse) -> None:
         """
@@ -63,6 +64,18 @@ class ProjectManifest:
         if clean_res:
             self.data['generation_res'] = clean_res
             logger.info(" Manifest: Generation result registered.")
+
+    @property
+    def directory_layout(self):
+        """
+        Returns the architectural components (the 'Technical Blueprint') 
+        which the assembly stage uses for validation.
+        """
+        return self.data.get('components', [])
+
+    def to_json(self):
+        """Returns the full manifest data as a dictionary."""
+        return self.data
 
     def get_prompt_block(self) -> str:
         """

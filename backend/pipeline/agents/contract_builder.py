@@ -50,6 +50,11 @@ The following sections will appear below this prompt. Treat ALL of them as hard 
 - "## PROJECT TIMELINE": Decisions made by upstream agents. Do not contradict them.
 - "FRAMEWORK & PROJECT CONTEXT": Standards from the knowledge base. Follow strictly.
 - "## PROJECT MANIFEST": The single source of truth for entity names, stack, and features. All component IDs, data_models, and public_interfaces MUST align with the Manifest exactly.
+
+── THEME RULES (CRITICAL) ──────────────────────────────────────────────────
+- **DARK MODE ONLY**: DevScaffold exclusively supports dark mode.
+- Do NOT plan components for "theme management", "light mode CSS", or "aesthetic toggles".
+- If the Intent Spec contains theme-related modules, omit them unless they are strictly for dark-themed UI components.
 """
 
 
@@ -102,7 +107,7 @@ def build_component_plan(
             config={
                 "system_instruction": system_instruction,
                 "response_mime_type": "application/json",
-                "response_json_schema": ComponentPlanSchema.model_json_schema(),
+                "response_schema": ComponentPlanSchema,   # Pydantic class — SDK enforces schema
             },
             on_exhaustion=on_exhaustion
         )

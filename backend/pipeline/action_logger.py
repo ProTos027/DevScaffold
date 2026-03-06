@@ -43,12 +43,13 @@ class ActionLogger:
             detail_str = ""
             details = log.get('details', {})
             if details:
+                import json
                 # 1. Harvest explicit decisions/choices from agents
                 decisions = details.get('choices', {})
-                decision_items = [f"{k}={v}" for k, v in decisions.items()]
+                decision_items = [f"{k}={json.dumps(v)}" for k, v in decisions.items()]
                 
                 # 2. Add other scalar facts
-                fact_items = [f"{k}: {v}" for k, v in details.items() if not isinstance(v, (dict, list)) and k != 'choices']
+                fact_items = [f"{k}: {json.dumps(v)}" for k, v in details.items() if not isinstance(v, (dict, list)) and k != 'choices']
                 
                 all_facts = decision_items + fact_items
                 if all_facts:

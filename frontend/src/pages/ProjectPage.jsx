@@ -211,13 +211,13 @@ export default function ProjectPage() {
             </div>
 
             {/* Tabs Navigation */}
-            <div className="bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] rounded-3xl mb-6 overflow-hidden">
-                <div className="flex">
+            <div className="bg-[rgb(var(--bg-secondary))] border border-[rgb(var(--border-primary))] rounded-3xl mb-6 overflow-x-auto custom-scrollbar">
+                <div className="flex min-w-max md:min-w-0 md:w-full">
                     {['status', 'intent-spec', 'components', 'code'].map((tab) => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`px-6 py-4 font-bold transition-all ${activeTab === tab
+                            className={`flex-1 px-6 py-4 font-bold transition-all whitespace-nowrap ${activeTab === tab
                                 ? 'bg-[rgb(var(--bg-primary))] text-[rgb(var(--color-primary))] border-b-2 border-[rgb(var(--color-primary))]'
                                 : 'text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))]'
                                 }`}
@@ -454,6 +454,18 @@ export default function ProjectPage() {
                                             </div>
                                         </div>
                                     </div>
+                                    <div className="p-6 bg-white/5 rounded-2xl border border-white/10 text-sm">
+                                        <h3 className="text-lg font-bold mb-4">Creative Vision</h3>
+                                        <p className="text-[10px] text-white/30 uppercase mb-4 tracking-widest">
+                                            Unique stylistic and functional instructions extracted from your prompt.
+                                        </p>
+                                        <textarea
+                                            value={editSpec?.creative_vision || ''}
+                                            onChange={e => setEditSpec({ ...editSpec, creative_vision: e.target.value })}
+                                            placeholder="e.g. 90s terminal aesthetic, neon space theme..."
+                                            className="w-full h-32 bg-white/5 border border-white/10 rounded-xl p-4 text-sm focus:outline-none focus:border-[rgb(var(--color-primary))] resize-none"
+                                        />
+                                    </div>
                                 </div>
                                 <div className="p-6 bg-white/5 rounded-2xl border border-white/10 overflow-y-auto max-h-[700px]">
                                     <h3 className="text-lg font-bold mb-6">Data Entities</h3>
@@ -508,9 +520,9 @@ export default function ProjectPage() {
                                     <div className="p-6 bg-white/5 rounded-2xl border border-white/5">
                                         <div className="badge-gold mb-6 uppercase tracking-[0.2em] text-[10px]">Architecture Stack</div>
                                         <div className="space-y-4">
-                                            <div className="flex justify-between items-center"><span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Backend</span><span className="text-sm font-bold text-[rgb(var(--color-primary))]">{project.intent_spec.stack.backend || 'None'} {project.intent_spec.backend_version && `(v${project.intent_spec.backend_version})`}</span></div>
-                                            <div className="flex justify-between items-center"><span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Frontend</span><span className="text-sm font-bold text-[rgb(var(--color-primary))]">{project.intent_spec.stack.frontend || 'None'} {project.intent_spec.frontend_version && `(v${project.intent_spec.frontend_version})`}</span></div>
-                                            <div className="flex justify-between items-center"><span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Database</span><span className="text-sm font-bold">{project.intent_spec.stack.database || 'None'} {project.intent_spec.database_version && `(v${project.intent_spec.database_version})`}</span></div>
+                                            <div className="flex justify-between items-center"><span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Backend</span><span className="text-sm font-bold text-[rgb(var(--color-primary))]">{project.intent_spec.stack?.backend?.framework || (typeof project.intent_spec.stack?.backend === 'string' ? project.intent_spec.stack.backend : 'None')} {project.intent_spec.backend_version && `(v${project.intent_spec.backend_version})`}</span></div>
+                                            <div className="flex justify-between items-center"><span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Frontend</span><span className="text-sm font-bold text-[rgb(var(--color-primary))]">{project.intent_spec.stack?.frontend?.framework || (typeof project.intent_spec.stack?.frontend === 'string' ? project.intent_spec.stack.frontend : 'None')} {project.intent_spec.frontend_version && `(v${project.intent_spec.frontend_version})`}</span></div>
+                                            <div className="flex justify-between items-center"><span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">Database</span><span className="text-sm font-bold">{project.intent_spec.stack?.database?.framework || (typeof project.intent_spec.stack?.database === 'string' ? project.intent_spec.stack.database : 'None')} {project.intent_spec.database_version && `(v${project.intent_spec.database_version})`}</span></div>
                                             <div className="flex justify-between items-center">
                                                 <span className="text-sm opacity-50 font-bold uppercase tracking-widest text-[10px]">API Type</span>
                                                 <span className="text-sm font-bold uppercase text-[rgb(var(--color-primary))]">{project.intent_spec.api_type || 'REST'}</span>
@@ -540,6 +552,14 @@ export default function ProjectPage() {
                                         <div className="text-sm leading-relaxed text-white/70 italic border-l-2 border-[rgb(var(--color-primary))]/30 pl-4 py-1">
                                             "{project.intent_spec.explanation || "No specific assumptions recorded."}"
                                         </div>
+                                        {project.intent_spec.creative_vision && (
+                                            <div className="mt-8 pt-6 border-t border-white/5">
+                                                <div className="text-[10px] font-bold text-[rgb(var(--color-primary))] uppercase mb-3 tracking-[0.2em]">Creative Vision / Aesthetic</div>
+                                                <div className="text-xs text-white/50 leading-loose bg-white/5 p-4 rounded-xl border border-white/5">
+                                                    {project.intent_spec.creative_vision}
+                                                </div>
+                                            </div>
+                                        )}
                                         <div className="mt-8">
                                             <div className="text-[9px] font-bold text-white/20 uppercase mb-3 tracking-widest">Inferred Features</div>
                                             <div className="flex flex-wrap gap-2">

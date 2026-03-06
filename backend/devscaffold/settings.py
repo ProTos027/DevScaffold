@@ -184,14 +184,20 @@ AUTHENTICATION_BACKENDS = [
     'allauth.account.auth_backends.AuthenticationBackend',
 ]
 
-ACCOUNT_EMAIL_VERIFICATION = 'optional'
+# Email — use console backend in dev (no SMTP server needed)
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_UNIQUE_EMAIL = True  
 SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = 'none'  # No email verification for OAuth
+SOCIALACCOUNT_EMAIL_REQUIRED = False
 SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
 ACCOUNT_ADAPTER = 'accounts.adapters.AccountAdapter'
+LOGIN_REDIRECT_URL = config('FRONTEND_URL', default='http://localhost:5173') + '/dashboard'
 
 SOCIALACCOUNT_PROVIDERS = {
     'github': {

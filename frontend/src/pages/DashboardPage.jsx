@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { projectsAPI, authAPI, apiKeysAPI } from '../api/client';
-import { useTheme } from '../context/ThemeContext';
 import CustomSelect from '../components/CustomSelect';
 
 export default function DashboardPage() {
@@ -13,7 +12,6 @@ export default function DashboardPage() {
     const [prompt, setPrompt] = useState('');
     const [projectName, setProjectName] = useState('');
     const [geminiModel, setGeminiModel] = useState('gemini-2.5-flash');
-    const [geminiApiKeyId, setGeminiApiKeyId] = useState('');
     const [geminiKeys, setGeminiKeys] = useState([]);
     const [hasKeys, setHasKeys] = useState({ gemini: false });
 
@@ -22,7 +20,6 @@ export default function DashboardPage() {
     const [newKeyForm, setNewKeyForm] = useState({ provider: 'gemini', name: '', apiKey: '' });
 
     const { user, logout } = useAuth();
-    const { isDark, toggleTheme } = useTheme();
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -55,16 +52,6 @@ export default function DashboardPage() {
 
             setGeminiKeys(geminiKeysList);
             setHasKeys(prev => ({ ...prev, gemini: geminiKeysList.length > 0 }));
-
-            // Ensure our selected ID is still valid, or pick a new one
-            if (geminiKeysList.length > 0) {
-                const isStillValid = geminiKeysList.some(k => k.id == geminiApiKeyId);
-                if (!geminiApiKeyId || !isStillValid) {
-                    setGeminiApiKeyId(geminiKeysList[0].id);
-                }
-            } else {
-                setGeminiApiKeyId('');
-            }
         } catch (error) {
             console.error('Failed to check Gemini keys:', error);
         }
@@ -91,7 +78,7 @@ export default function DashboardPage() {
         }
 
         try {
-            const response = await projectsAPI.create(prompt, geminiModel, projectName, geminiApiKeyId);
+            const response = await projectsAPI.create(prompt, geminiModel, projectName);
             if (response && response.data) {
                 navigate(`/project/${response.data.id}`);
             } else {
@@ -290,20 +277,6 @@ export default function DashboardPage() {
 
                 {/* Bottom Actions */}
                 <div className="pt-6 border-t border-[rgb(var(--border-primary))] space-y-4">
-                    <button onClick={toggleTheme} className="w-full flex items-center justify-between px-4 py-2 rounded-lg hover:bg-[rgb(var(--bg-secondary)/0.5)] transition-colors">
-                        <span className="text-sm">Theme</span>
-                        <span>
-                            {isDark ? (
-                                <svg className="w-5 h-5 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                                </svg>
-                            ) : (
-                                <svg className="w-5 h-5 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                                </svg>
-                            )}
-                        </span>
-                    </button>
                     <button
                         onClick={logout}
                         className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-[rgb(var(--status-error)/0.1)] hover:bg-[rgb(var(--status-error)/0.2)] text-[rgb(var(--status-error))] transition-colors border border-[rgb(var(--status-error)/0.1)]"
@@ -375,43 +348,19 @@ export default function DashboardPage() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div className="group">
-                                    <label className="block text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-secondary))] mb-3 px-2">API Key</label>
-                                    {!hasKeys.gemini ? (
-                                        <button
-                                            type="button"
-                                            onClick={openAPIKeysModal}
-                                            className="w-full py-4 rounded-2xl bg-[rgb(var(--status-warning)/0.05)] text-[rgb(var(--status-warning))] text-sm border border-[rgb(var(--status-warning)/0.1)] hover:bg-[rgb(var(--status-warning)/0.1)] transition-all flex items-center justify-center gap-2 font-bold"
-                                        >
-                                            ⚠️ Setup API Key to Proceed
-                                        </button>
-                                    ) : (
-                                        <CustomSelect
-                                            options={geminiKeys.map(key => ({
-                                                id: key.id,
-                                                label: `Key: ${key.name || `...${key.key_preview}`}`
-                                            }))}
-                                            value={geminiApiKeyId}
-                                            onChange={setGeminiApiKeyId}
-                                            placeholder="Choose API Key"
-                                        />
-                                    )}
-                                </div>
-                                <div className="group">
-                                    <CustomSelect
-                                        label="Model"
-                                        options={[
-                                            { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro' },
-                                            { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash' },
-                                            { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
-                                            { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
-                                            { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash-Lite' },
-                                        ]}
-                                        value={geminiModel}
-                                        onChange={setGeminiModel}
-                                    />
-                                </div>
+                            <div className="group">
+                                <label className="block text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-secondary))] mb-3 px-2">Model Selection</label>
+                                <CustomSelect
+                                    options={[
+                                        { value: 'gemini-3-pro-preview', label: 'Gemini 3 Pro' },
+                                        { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash' },
+                                        { value: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro' },
+                                        { value: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash' },
+                                        { value: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash-Lite' },
+                                    ]}
+                                    value={geminiModel}
+                                    onChange={setGeminiModel}
+                                />
                             </div>
                         </div>
 
@@ -429,128 +378,130 @@ export default function DashboardPage() {
                 <div className="mt-12 text-center text-xs text-[rgb(var(--text-secondary))] uppercase tracking-[0.5em] opacity-30 select-none">
                     Entropy Strictly Decreases
                 </div>
-            </main>
+            </main >
 
             {/* API Keys Modal */}
-            {showAPIKeysModal && (
-                <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[70]">
-                    <div className="glass-3 p-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-fade-in">
-                        <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-3xl font-display font-bold">Secret <span className="text-gold-solid">Vault</span></h2>
-                            <button onClick={() => setShowAPIKeysModal(false)} className="text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] transition-colors">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-                        <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-secondary))] mb-10">Multi-Provider Key Orchestration</p>
+            {
+                showAPIKeysModal && (
+                    <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-[70]">
+                        <div className="glass-3 p-10 max-w-2xl w-full max-h-[90vh] overflow-y-auto relative animate-fade-in">
+                            <div className="flex justify-between items-center mb-2">
+                                <h2 className="text-3xl font-display font-bold">Secret <span className="text-gold-solid">Vault</span></h2>
+                                <button onClick={() => setShowAPIKeysModal(false)} className="text-[rgb(var(--text-secondary))] hover:text-[rgb(var(--text-primary))] transition-colors">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <p className="text-xs font-bold uppercase tracking-widest text-[rgb(var(--text-secondary))] mb-10">Multi-Provider Key Orchestration</p>
 
-                        {/* Add New Key Form */}
-                        <div className="mb-10 p-8 bg-[rgb(var(--bg-secondary)/0.3)] rounded-3xl border border-[rgb(var(--border-primary))]">
-                            <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-[rgb(var(--text-secondary))] uppercase tracking-widest">
-                                <svg className="w-4 h-4 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg> Register New Credential
-                            </h3>
-                            <form onSubmit={async (e) => {
-                                e.preventDefault();
-                                try {
-                                    await apiKeysAPI.create(newKeyForm.provider, newKeyForm.name, newKeyForm.apiKey);
-                                    setNewKeyForm({ provider: 'gemini', name: '', apiKey: '' });
-                                    const { data } = await apiKeysAPI.list();
-                                    setUserApiKeys(Array.isArray(data) ? data : (data?.results || []));
-                                    checkGeminiKeys();
-                                } catch (error) {
-                                    alert(error.response?.data?.name?.[0] || error.response?.data?.detail || 'Failed to add API key');
-                                }
-                            }} className="space-y-5">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <CustomSelect
-                                        label="Engine"
-                                        options={[{ value: 'gemini', label: 'Google Gemini' }]}
-                                        value={newKeyForm.provider}
-                                        onChange={(val) => setNewKeyForm({ ...newKeyForm, provider: val })}
-                                    />
+                            {/* Add New Key Form */}
+                            <div className="mb-10 p-8 bg-[rgb(var(--bg-secondary)/0.3)] rounded-3xl border border-[rgb(var(--border-primary))]">
+                                <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-[rgb(var(--text-secondary))] uppercase tracking-widest">
+                                    <svg className="w-4 h-4 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg> Register New Credential
+                                </h3>
+                                <form onSubmit={async (e) => {
+                                    e.preventDefault();
+                                    try {
+                                        await apiKeysAPI.create(newKeyForm.provider, newKeyForm.name, newKeyForm.apiKey);
+                                        setNewKeyForm({ provider: 'gemini', name: '', apiKey: '' });
+                                        const { data } = await apiKeysAPI.list();
+                                        setUserApiKeys(Array.isArray(data) ? data : (data?.results || []));
+                                        checkGeminiKeys();
+                                    } catch (error) {
+                                        alert(error.response?.data?.name?.[0] || error.response?.data?.detail || 'Failed to add API key');
+                                    }
+                                }} className="space-y-5">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <CustomSelect
+                                            label="Engine"
+                                            options={[{ value: 'gemini', label: 'Google Gemini' }]}
+                                            value={newKeyForm.provider}
+                                            onChange={(val) => setNewKeyForm({ ...newKeyForm, provider: val })}
+                                        />
+                                        <div className="space-y-2">
+                                            <label className="block text-label text-[rgb(var(--text-secondary))] px-1">Name</label>
+                                            <input
+                                                type="text"
+                                                value={newKeyForm.name}
+                                                onChange={(e) => setNewKeyForm({ ...newKeyForm, name: e.target.value })}
+                                                className="input-field w-full text-xs py-3"
+                                                placeholder="e.g. Production Engine"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
                                     <div className="space-y-2">
-                                        <label className="block text-label text-[rgb(var(--text-secondary))] px-1">Name</label>
+                                        <label className="block text-label text-[rgb(var(--text-secondary))] px-1">API Key</label>
                                         <input
-                                            type="text"
-                                            value={newKeyForm.name}
-                                            onChange={(e) => setNewKeyForm({ ...newKeyForm, name: e.target.value })}
+                                            type="password"
+                                            value={newKeyForm.apiKey}
+                                            onChange={(e) => setNewKeyForm({ ...newKeyForm, apiKey: e.target.value })}
                                             className="input-field w-full text-xs py-3"
-                                            placeholder="e.g. Production Engine"
+                                            placeholder="AIza..."
                                             required
                                         />
                                     </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="block text-label text-[rgb(var(--text-secondary))] px-1">API Key</label>
-                                    <input
-                                        type="password"
-                                        value={newKeyForm.apiKey}
-                                        onChange={(e) => setNewKeyForm({ ...newKeyForm, apiKey: e.target.value })}
-                                        className="input-field w-full text-xs py-3"
-                                        placeholder="AIza..."
-                                        required
-                                    />
-                                </div>
-                                <button type="submit" className="w-full py-4 rounded-2xl bg-cosmic-cyan/10 hover:bg-cosmic-cyan/20 border border-[rgb(var(--border-primary))] transition-all font-bold text-xs uppercase tracking-widest text-cosmic-cyan">
-                                    Authorize Secret
-                                </button>
-                            </form>
-                        </div>
+                                    <button type="submit" className="w-full py-4 rounded-2xl bg-cosmic-cyan/10 hover:bg-cosmic-cyan/20 border border-[rgb(var(--border-primary))] transition-all font-bold text-xs uppercase tracking-widest text-cosmic-cyan">
+                                        Authorize Secret
+                                    </button>
+                                </form>
+                            </div>
 
-                        {/* Existing Keys List */}
-                        <div className="space-y-6">
-                            <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-[rgb(var(--text-secondary))] uppercase tracking-widest">
-                                <svg className="w-4 h-4 text-cosmic-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                                </svg> Active Credentials
-                            </h3>
-                            {!userApiKeys || userApiKeys.length === 0 ? (
-                                <div className="text-[rgb(var(--text-secondary))] text-center py-16 glass-card !bg-transparent !border-dashed border-[rgb(var(--border-primary))] rounded-3xl">
-                                    <p className="text-sm italic">No credentials currently authorized.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 gap-4">
-                                    {userApiKeys.map((key) => (
-                                        <div key={key.id} className="group flex items-center justify-between p-5 glass-card !bg-[rgb(var(--bg-secondary)/0.5)] !border-[rgb(var(--border-primary))] hover:!border-[rgb(var(--border-primary)/0.4)] transition-all relative overflow-hidden">
-                                            <div className="absolute top-0 left-0 w-1 h-full bg-cosmic-cyan opacity-50 group-hover:opacity-100 transition-opacity"></div>
-                                            <div>
-                                                <div className="font-bold text-sm tracking-tight">{key.name}</div>
-                                                <div className="text-[10px] text-[rgb(var(--text-secondary))] uppercase flex gap-4 mt-2">
-                                                    <span className="text-[rgb(var(--color-primary))] font-bold">{key.provider}</span>
-                                                    <span>Vault ID: ...${key.id.toString().slice(-4)}</span>
-                                                    <span>Registered: {new Date(key.created_at).toLocaleDateString()}</span>
+                            {/* Existing Keys List */}
+                            <div className="space-y-6">
+                                <h3 className="text-sm font-bold mb-6 flex items-center gap-2 text-[rgb(var(--text-secondary))] uppercase tracking-widest">
+                                    <svg className="w-4 h-4 text-cosmic-purple" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg> Active Credentials
+                                </h3>
+                                {!userApiKeys || userApiKeys.length === 0 ? (
+                                    <div className="text-[rgb(var(--text-secondary))] text-center py-16 glass-card !bg-transparent !border-dashed border-[rgb(var(--border-primary))] rounded-3xl">
+                                        <p className="text-sm italic">No credentials currently authorized.</p>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {userApiKeys.map((key) => (
+                                            <div key={key.id} className="group flex items-center justify-between p-5 glass-card !bg-[rgb(var(--bg-secondary)/0.5)] !border-[rgb(var(--border-primary))] hover:!border-[rgb(var(--border-primary)/0.4)] transition-all relative overflow-hidden">
+                                                <div className="absolute top-0 left-0 w-1 h-full bg-cosmic-cyan opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                                                <div>
+                                                    <div className="font-bold text-sm tracking-tight">{key.name}</div>
+                                                    <div className="text-[10px] text-[rgb(var(--text-secondary))] uppercase flex gap-4 mt-2">
+                                                        <span className="text-[rgb(var(--color-primary))] font-bold">{key.provider}</span>
+                                                        <span>Vault ID: ...${key.id.toString().slice(-4)}</span>
+                                                        <span>Registered: {new Date(key.created_at).toLocaleDateString()}</span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <button
-                                                onClick={async () => {
-                                                    if (confirm('Permanently purge this credential from the vault?')) {
-                                                        try {
-                                                            await apiKeysAPI.delete(key.id);
-                                                            const { data } = await apiKeysAPI.list();
-                                                            setUserApiKeys(Array.isArray(data) ? data : (data?.results || []));
-                                                            checkGeminiKeys();
-                                                        } catch (error) {
-                                                            alert('Failed to delete key');
+                                                <button
+                                                    onClick={async () => {
+                                                        if (confirm('Permanently purge this credential from the vault?')) {
+                                                            try {
+                                                                await apiKeysAPI.delete(key.id);
+                                                                const { data } = await apiKeysAPI.list();
+                                                                setUserApiKeys(Array.isArray(data) ? data : (data?.results || []));
+                                                                checkGeminiKeys();
+                                                            } catch (error) {
+                                                                alert('Failed to delete key');
+                                                            }
                                                         }
-                                                    }
-                                                }}
-                                                className="opacity-0 group-hover:opacity-100 p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/30 text-red-500 transition-all border border-red-500/10"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
+                                                    }}
+                                                    className="opacity-0 group-hover:opacity-100 p-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/30 text-red-500 transition-all border border-red-500/10"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

@@ -7,92 +7,26 @@
   --font-main: 'Inter', sans-serif;
   --font-display: 'Orbitron', sans-serif;
 
-  /* Brand Colors */
-  --color-primary: 8 145 178;
-  --color-secondary: 37 99 235;
+  /* Brand Colors (Cosmic Gold) */
+  --color-primary: 212 163 115;
+  --color-secondary: 161 123 87;
   --color-accent: 219 39 119;
   --color-secondary-accent: 147 51 234;
-  /* #9333ea - Cosmic Purple */
-  --color-brand-separator: 8 145 178;
+  --color-brand-separator: 212 163 115;
 
-  /* Brand Gradients - Light Mode (Cyan/Blue) */
-  --gradient-brand: linear-gradient(135deg, #06b6d4 0%, #0891b2 50%, #2563eb 100%);
+  /* Brand Gradients - Dark Mode (Gold/Bronze) */
+  --gradient-brand: linear-gradient(135deg, rgb(255 215 150) 0%, rgb(212 163 115) 50%, rgb(161 123 87) 100%);
   --gradient-primary: linear-gradient(135deg, rgb(var(--color-primary)) 0%, rgb(var(--color-secondary)) 100%);
   --gradient-secondary: linear-gradient(135deg, rgb(var(--color-secondary)) 0%, rgb(var(--color-primary)) 100%);
 
-  /* Light Mode Tokens */
-  --bg-primary: 255 255 255;
-  --bg-secondary: 240 249 255;
-  --text-primary: 17 24 39;
-  --text-secondary: 75 85 99;
-  --border-primary: 0 0 0 / 0.1;
-
-  /* Surface Levels - Light (Solid White) */
-  --glass-bg: 255 255 255;
-  --glass-border: 0 0 0 / 0.1;
-  --glass-blur: 0px;
-
-  /* Background Filter - Light */
-  --bg-filter: invert(1) contrast(0.8);
-
-  /* Semantic Colors - Node Logic */
-  --node-bg: 255 255 255;
-  --node-text: 17 24 39;
-  --node-border-default: 0 0 0 / 0.1;
-  --node-data: 59 130 246;
-  --node-frontend: 16 185 129;
-  --node-backend: 245 158 11;
-
-  /* Status Colors - Light (Darkened for Contrast) */
-  --status-success: 21 128 61;
-  /* Green 700 */
-  --status-warning: 180 83 9;
-  /* Amber 700 */
-  --status-error: 153 27 27;
-  /* Red 800 */
-  --status-info: 14 116 144;
-  /* Cyan 700 */
-
-  /* Code Preview - Light */
-  --code-sidebar-bg: 249 250 251;
-  --code-sidebar-border: 0 0 0 / 0.1;
-  --code-selected: 8 145 178 / 0.1;
-
-  /* Spacing Tokens */
-  --sp-xs: 0.25rem;
-  /* 4px */
-  --sp-sm: 0.5rem;
-  /* 8px */
-  --sp-md: 1rem;
-  /* 16px */
-  --sp-lg: 1.5rem;
-  /* 24px */
-  --sp-xl: 3rem;
-  /* 48px */
-}
-
-.dark {
   /* Dark Mode Tokens */
   --bg-primary: 0 0 0;
-  /* Pure Black */
   --bg-secondary: 9 9 11;
-  /* Zinc 950 */
   --text-primary: 228 228 231;
-  /* Zinc 200 - Silver */
   --text-secondary: 113 113 122;
-  /* Zinc 500 - Dark Charcoal */
   --border-primary: 255 255 255 / 0.1;
-  --color-primary: 212 163 115;
-  /* Cosmic Gold */
-  --color-secondary: 161 123 87;
-  --color-secondary-accent: 147 51 234;
-  /* #9333ea - Cosmic Purple */
 
-  /* Brand Gradient - Dark Mode (Gold/Bronze) */
-  --gradient-brand: linear-gradient(135deg, rgb(255 215 150) 0%, rgb(212 163 115) 50%, rgb(161 123 87) 100%);
-  --color-brand-separator: 212 163 115;
-
-  /* Surface Levels - Dark (Absolute Black / Zinc 950) */
+  /* Surface Levels - Dark */
   --glass-bg: 9 9 11;
   --glass-border: 255 255 255 / 0.05;
   --glass-blur: 0px;
@@ -100,25 +34,24 @@
   /* Background Filter - Dark */
   --bg-filter: contrast(1.0);
 
-  /* Semantic Colors - Node Logic (Deep Void) */
+  /* Semantic Colors - Node Logic */
   --node-bg: 0 0 0;
   --node-text: 228 228 231;
   --node-border-default: 255 255 255 / 0.05;
-
-  /* Code Preview - Dark (Deep Void) */
-  --code-sidebar-bg: 0 0 0;
-  --code-sidebar-border: 255 255 255 / 0.05;
-  --code-selected: 212 163 115 / 0.1;
+  --node-data: 59 130 246;
+  --node-frontend: 16 185 129;
+  --node-backend: 245 158 11;
 
   /* Status Colors - Dark */
   --status-success: 20 184 166;
-  /* Teal 500 */
   --status-warning: 245 158 11;
-  /* Amber 500 */
   --status-error: 239 68 68;
-  /* Red 500 */
   --status-info: 6 182 212;
-  /* Cyan 500 */
+
+  /* Code Preview - Dark */
+  --code-sidebar-bg: 0 0 0;
+  --code-sidebar-border: 255 255 255 / 0.05;
+  --code-selected: 212 163 115 / 0.1;
 
   /* Spacing Tokens */
   --sp-xs: 0.25rem;
@@ -132,6 +65,8 @@
 @layer base {
   html {
     background-color: rgb(var(--bg-primary));
+    font-size: 15px;
+    /* Slightly reduced base: 16px -> 15px */
     @apply transition-colors duration-500;
   }
 
@@ -141,6 +76,7 @@
     background-color: transparent;
     @apply antialiased;
     min-height: 100vh;
+    width: 100vw;
     overflow-x: hidden;
   }
 
@@ -183,6 +119,24 @@
   ::-webkit-scrollbar-thumb:hover {
     background-color: rgb(var(--color-primary) / 0.8);
   }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    height: 4px;
+    width: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-primary) / 0.2);
+    border-radius: 10px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgb(var(--color-primary) / 0.5);
+  }
 }
 
 @layer components {
@@ -207,6 +161,15 @@
     backdrop-filter: blur(calc(var(--glass-blur) * 1.5));
     border: 1px solid rgb(var(--glass-border) / 0.3);
     @apply rounded-3xl;
+  }
+
+  /* Responsive layout utilities */
+  .container-responsive {
+    @apply w-full px-4 md:px-8 mx-auto max-w-7xl;
+  }
+
+  .grid-responsive {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
   }
 
   .glass-card {
@@ -272,43 +235,43 @@
   /* Title / Hero level - Orbitron */
   .text-hero {
     font-family: var(--font-display);
-    @apply text-4xl md:text-6xl lg:text-7xl font-bold leading-tight tracking-tight;
+    @apply text-3xl md:text-5xl lg:text-6xl font-bold leading-tight tracking-tight;
   }
 
   /* Section level - Orbitron */
   .text-section {
     font-family: var(--font-display);
-    @apply text-3xl md:text-4xl lg:text-5xl font-bold leading-tight;
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold leading-tight;
   }
 
   /* Component / Subtitle level - Orbitron */
   .text-subtitle {
     font-family: var(--font-display);
-    @apply text-xl md:text-2xl font-bold;
+    @apply text-lg md:text-xl font-bold;
   }
 
   /* Primary Lead / Emphasis text - Inter */
   .text-lead {
     font-family: var(--font-main);
-    @apply text-lg md:text-xl lg:text-2xl leading-relaxed;
+    @apply text-base md:text-lg lg:text-xl leading-relaxed;
   }
 
   /* Standard body text - Inter */
   .text-body {
     font-family: var(--font-main);
-    @apply text-sm md:text-base leading-relaxed;
+    @apply text-[13px] md:text-sm leading-relaxed;
   }
 
   /* Functional Labels - Inter, Tracked, Uppercase */
   .text-label {
     font-family: var(--font-main);
-    @apply text-xs font-bold uppercase tracking-[0.2em];
+    @apply text-[10px] font-bold uppercase tracking-[0.2em];
   }
 
   /* System Meta / Legend / Footnotes - Inter, Small */
   .text-meta {
     font-family: var(--font-main);
-    @apply text-[10px] md:text-xs uppercase tracking-widest opacity-50;
+    @apply text-[9px] md:text-[10px] uppercase tracking-widest opacity-50;
   }
 
   /* --- Special Brand/Header Text --- */

@@ -224,8 +224,7 @@ export default function AuthDrawer({ isOpen, onClose }) {
                     </div>
                     <button
                         onClick={() => {
-                            const theme = localStorage.getItem('theme') || 'dark';
-                            window.location.href = `http://localhost:8000/accounts/github/login/?process=login&theme=${theme}`;
+                            window.location.href = `http://localhost:8000/accounts/github/login/?process=login&theme=dark`;
                         }}
                         className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[rgb(var(--bg-primary))] transition-transform hover:scale-[1.02] text-[rgb(var(--text-primary))] border border-[rgb(var(--border-primary))] shadow-sm"
                     >

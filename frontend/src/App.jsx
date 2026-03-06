@@ -1,7 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
 import LandingPage from './pages/LandingPage';
 import DashboardPage from './pages/DashboardPage';
 import ProjectPage from './pages/ProjectPage';
@@ -24,33 +23,32 @@ const PrivateRoute = ({ children }) => {
 
 function App() {
     return (
-        <ThemeProvider>
-            <AuthProvider>
-                <Router>
-                    <Routes>
-                        <Route path="/" element={<LandingPage />} />
-                        <Route path="/login" element={<LandingPage />} />
-                        <Route
-                            path="/dashboard"
-                            element={
-                                <PrivateRoute>
-                                    <DashboardPage />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route
-                            path="/project/:id"
-                            element={
-                                <PrivateRoute>
-                                    <ProjectPage />
-                                </PrivateRoute>
-                            }
-                        />
-                        <Route path="/auth/github/callback" element={<GitHubCallback />} />
-                    </Routes>
-                </Router>
-            </AuthProvider>
-        </ThemeProvider>
+        <AuthProvider>
+            <Router>
+                <Routes>
+                    <Route path="/" element={<LandingPage />} />
+                    <Route path="/login" element={<LandingPage />} />
+                    <Route
+                        path="/dashboard"
+                        element={
+                            <PrivateRoute>
+                                <DashboardPage />
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route
+                        path="/project/:id"
+                        element={
+                            <PrivateRoute>
+                                <ProjectPage />
+                            </PrivateRoute>
+                        }
+                    />
+                    <Route path="/auth/callback" element={<GitHubCallback />} />
+                    <Route path="/auth/github/callback" element={<GitHubCallback />} />
+                </Routes>
+            </Router>
+        </AuthProvider>
     );
 }
 

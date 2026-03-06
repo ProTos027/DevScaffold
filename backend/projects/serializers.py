@@ -11,8 +11,8 @@ class IntentSpecSerializer(serializers.ModelSerializer):
     class Meta:
         model = IntentSpec
         fields = ('id', 'project_type', 'stack', 'api_type', 'features', 
-                 'architecture', 'data_entities', 'auth_method', 'version',
-                 'created_at', 'updated_at')
+                 'architecture', 'data_entities', 'auth_method', 'creative_vision',
+                 'version', 'created_at', 'updated_at')
         read_only_fields = ('id', 'created_at', 'updated_at', 'version')
 
 

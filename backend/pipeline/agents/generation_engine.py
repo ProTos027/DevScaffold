@@ -22,6 +22,7 @@ Your job is to generate specific files for a project based on the Manifest.
 - CONSISTENCY: Every import path must match the actual file paths in the Directory Layout.
 - STACK COMPLIANCE: Use the exact frameworks, versions, and API types defined in the Manifest.
 - INTERFACE ACCURACY: All API endpoints and data models must match the locked Scope Contracts.
+- CREATIVE VISION: Check the `creative_vision` in the Manifest / Context. You MUST apply these stylistic and functional nuances (e.g., specific themes, aesthetics, or unique interactions) to your generated code. **DARK MODE ONLY**: Every frontend component must be dark-themed; do not generate light-mode CSS or theme-switching logic.
 - CONTRACTS: Populate `cross_layer_contracts` with all facts that downstream phases need (port, base URL, env var names, auth headers).
 
 ── ANTI-LAZINESS & ANTI-MINIFICATION (CRITICAL) ─────────────────────────────
@@ -102,15 +103,76 @@ def _call_gemini_for_phase(
         config={
             "system_instruction": system_instruction,
             "response_mime_type": "application/json",
-            "response_json_schema": GeneratedFilesResponse.model_json_schema(),
+            # No response_schema: GeneratedFilesResponse has Dict fields incompatible with Gemini schema enforcement.
+            # The system prompt provides sufficient structure guidance.
         },
         on_exhaustion=on_exhaustion
     )
 
     content = response.candidates[0].content.parts[0].text
-    data = json.loads(content)
+    try:
+        data = json.loads(content)
+    except json.JSONDecodeError as e:
+        logger.error(f"Gemini output invalid JSON in phase {phase_name}: {e}\nRaw Content: {content}")
+        raise
+
+    # Gemini sometimes returns the list of files directly as a top-level list,
+    # or wraps it inside a different key. Normalize before parsing.
+    if isinstance(data, list):
+        data = {"files": data}
+    elif "files" not in data:
+        # Try common alternative wrapping keys
+        for alt_key in ("generated_files", "output", "result"):
+            if alt_key in data and isinstance(data[alt_key], list):
+                data["files"] = data.pop(alt_key)
+                break
+        else:
+            # Nothing found — data itself may be {path:..., content:..., language:...} (single file)
+            if "path" in data and "content" in data:
+                data = {"files": [data]}
+
+    # Normalize each file dict — Gemini uses inconsistent field names without schema enforcement
+    if "files" in data and isinstance(data["files"], list):
+        normalized_files = []
+        for f in data["files"]:
+            if isinstance(f, dict):
+                # Normalize path field
+                if "path" not in f:
+                    for alt in ("file_path", "filepath", "filename", "name"):
+                        if alt in f:
+                            f["path"] = f.pop(alt)
+                            break
+                # Normalize content field
+                if "content" not in f:
+                    for alt in ("file_content", "code", "source", "body", "text"):
+                        if alt in f:
+                            f["content"] = f.pop(alt)
+                            break
+                # Normalize language field
+                if "language" not in f:
+                    for alt in ("language_type", "lang", "file_type", "type"):
+                        if alt in f:
+                            f["language"] = f.pop(alt)
+                            break
+                if "language" not in f and "path" in f:
+                    ext = f["path"].rsplit(".", 1)[-1] if "." in f["path"] else ""
+                    f["language"] = ext or "text"
+                normalized_files.append(f)
+        data["files"] = normalized_files
+
+    # Normalize interface_contracts: Gemini sometimes outputs a dict instead of a markdown string
+    if "interface_contracts" in data and not isinstance(data["interface_contracts"], str):
+        import json as _json
+        data["interface_contracts"] = _json.dumps(data["interface_contracts"], indent=2)
+
+    # Normalize implementation_notes: must be Dict[str, str] — flatten nested structures
+    if "implementation_notes" in data and isinstance(data["implementation_notes"], dict):
+        flat = {}
+        for k, v in data["implementation_notes"].items():
+            flat[str(k)] = v if isinstance(v, str) else _json.dumps(v)
+        data["implementation_notes"] = flat
+
     parsed = GeneratedFilesResponse(**data)
-    
     return parsed
 
 def generate_backend(intent_spec, model_name, **kwargs) -> GeneratedFilesResponse:
@@ -175,7 +237,7 @@ Generate ONLY the following project-wide configuration and dependency files:
 
 PATH FORMAT (CRITICAL): All file paths must be bare relative paths with NO leading slash.
   CORRECT: `README.md`, `backend/alembic.ini`, `.env.example`
-  WRONG:   `/README.md`, `\\README.md`
+  WRONG:   `/README.md` (MUST be relative), or any leading slashes.
 
 INTERFACE_CONTRACTS / CROSS_LAYER_CONTRACTS: **OMIT**. Do not generate these.
 

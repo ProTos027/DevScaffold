@@ -101,36 +101,38 @@ const DependencyGraph = ({ components }) => {
     return (
         <div className="space-y-4">
             <div className="w-full h-[550px] bg-[rgb(var(--bg-secondary))] rounded-2xl border border-[rgb(var(--border-primary))] overflow-hidden relative">
-                <div className="absolute top-4 left-4 z-10 p-3 bg-[rgb(var(--bg-primary))] rounded-xl border border-[rgb(var(--border-primary))]">
-                    <div className="badge-gold mb-1">Architecture Preview</div>
-                    <div className="text-[9px] text-[rgb(var(--text-secondary))] uppercase">Interactive Schema</div>
+                <div className="absolute top-2 left-2 md:top-4 md:left-4 z-10 p-2 md:p-3 bg-[rgb(var(--bg-primary))] rounded-xl border border-[rgb(var(--border-primary))] max-w-[calc(100%-100px)]">
+                    <div className="badge-gold mb-1 text-[8px] md:text-[10px]">Architecture Preview</div>
+                    <div className="text-[7px] md:text-[9px] text-[rgb(var(--text-secondary))] uppercase hidden sm:block">Interactive Schema</div>
                 </div>
 
                 <ReactFlow nodes={layoutedNodes} edges={layoutedEdges} fitView className="bg-transparent">
                     <Controls position="top-right" className="bg-[rgb(var(--bg-secondary)/0.5)] border-[rgb(var(--border-primary))] !text-[rgb(var(--text-primary))]" />
                 </ReactFlow>
 
-                <div className="absolute bottom-4 left-4 z-10 flex flex-wrap gap-2">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgb(var(--bg-primary))] rounded-lg border border-[rgb(var(--border-primary))] transition-transform hover:scale-105">
-                        <div className="w-2 h-2 rounded-sm border border-[rgb(var(--node-data))]"></div>
-                        <span className="text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Data Model</span>
+                <div className="absolute bottom-2 left-2 right-2 md:bottom-4 md:left-4 md:right-4 z-10 flex flex-col sm:flex-row justify-between gap-2 pointer-events-none">
+                    <div className="flex flex-wrap gap-2 pointer-events-auto">
+                        <div className="flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 bg-[rgb(var(--bg-primary))] rounded-lg border border-[rgb(var(--border-primary))] shrink-0">
+                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-sm border border-[rgb(var(--node-data))]"></div>
+                            <span className="text-[8px] md:text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Data</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 bg-[rgb(var(--bg-secondary)/0.4)] backdrop-blur-md rounded-lg border border-[rgb(var(--border-primary))] shrink-0">
+                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full border border-[rgb(var(--node-backend))]"></div>
+                            <span className="text-[8px] md:text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Backend</span>
+                        </div>
+                        <div className="flex items-center gap-2 px-2 md:px-3 py-1 md:py-1.5 bg-[rgb(var(--bg-secondary)/0.4)] backdrop-blur-md rounded-lg border border-[rgb(var(--border-primary))] shrink-0">
+                            <div className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full border border-[rgb(var(--node-frontend))]"></div>
+                            <span className="text-[8px] md:text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Frontend</span>
+                        </div>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgb(var(--bg-secondary)/0.4)] backdrop-blur-md rounded-lg border border-[rgb(var(--border-primary))] transition-transform hover:scale-105">
-                        <div className="w-2 h-2 rounded-full border border-[rgb(var(--node-backend))]"></div>
-                        <span className="text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Backend</span>
-                    </div>
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-[rgb(var(--bg-secondary)/0.4)] backdrop-blur-md rounded-lg border border-[rgb(var(--border-primary))] transition-transform hover:scale-105">
-                        <div className="w-2 h-2 rounded-full border border-[rgb(var(--node-frontend))]"></div>
-                        <span className="text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Frontend</span>
-                    </div>
-                </div>
 
-                <div className="absolute bottom-4 right-4 z-10 p-2 px-3 bg-[rgb(var(--bg-secondary)/0.4)] backdrop-blur-md rounded-lg border border-[rgb(var(--border-primary))] flex items-center gap-2">
-                    <div className="flex items-center">
-                        <div className="w-4 h-[1px] bg-[rgb(var(--text-primary)/0.4)]"></div>
-                        <div className="w-0 h-0 border-t-[3px] border-t-transparent border-l-[6px] border-l-[rgb(var(--text-primary)/0.4)] border-b-[3px] border-b-transparent -ml-[1px]"></div>
+                    <div className="p-1 md:p-2 px-2 md:px-3 bg-[rgb(var(--bg-secondary)/0.4)] backdrop-blur-md rounded-lg border border-[rgb(var(--border-primary))] flex items-center gap-2 w-fit pointer-events-auto shrink-0">
+                        <div className="flex items-center">
+                            <div className="w-3 md:w-4 h-[1px] bg-[rgb(var(--text-primary)/0.4)]"></div>
+                            <div className="w-0 h-0 border-t-[2px] md:border-t-[3px] border-t-transparent border-l-[4px] md:border-l-[6px] border-l-[rgb(var(--text-primary)/0.4)] border-b-[2px] md:border-b-[3px] border-b-transparent -ml-[1px]"></div>
+                        </div>
+                        <span className="text-[8px] md:text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter underline decoration-[rgb(var(--color-primary))/0.3]">Depends On</span>
                     </div>
-                    <span className="text-[9px] text-[rgb(var(--text-secondary))] font-bold uppercase tracking-tighter">Arrow: Depends On</span>
                 </div>
             </div>
         </div>

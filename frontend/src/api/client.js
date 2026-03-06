@@ -47,15 +47,14 @@ api.interceptors.response.use(
 export const authAPI = {
     login: (email, password) => api.post('/auth/login/', { email, password }),
     register: (email, password, firstName, lastName) =>
-        api.post('/auth/register/', { email, password, first_name: firstName, last_name: lastName }),
+        api.post('/auth/register/', { email, password, password2: password, first_name: firstName, last_name: lastName }),
     getProfile: () => api.get('/auth/profile/'),
-    githubAuth: (code) => api.get(`/auth/github/callback/?code=${code}`),
 };
 
 export const projectsAPI = {
     list: () => api.get('/projects/'),
-    create: (prompt, geminiModel, name, geminiApiKeyId) =>
-        api.post('/projects/', { prompt, gemini_model: geminiModel, name, gemini_api_key_id: geminiApiKeyId }),
+    create: (prompt, geminiModel, name) =>
+        api.post('/projects/', { prompt, gemini_model: geminiModel, name }),
     get: (id) => api.get(`/projects/${id}/`),
     getStatus: (id) => api.get(`/projects/${id}/status/`),
     download: (id) => api.get(`/projects/${id}/download/`, { responseType: 'blob' }),

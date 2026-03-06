@@ -140,6 +140,7 @@ class IntentSpec(models.Model):
     # Resilience flags
     vague_intent = models.BooleanField(default=False)
     explanation = models.TextField(blank=True, default="")
+    creative_vision = models.TextField(blank=True, default="")
     
     # Metadata
     version = models.IntegerField(default=1)
@@ -165,6 +166,7 @@ class IntentSpec(models.Model):
             'auth_method': self.auth_method,
             'vague_intent': self.vague_intent,
             'explanation': self.explanation,
+            'creative_vision': self.creative_vision,
         }
     
     @classmethod
@@ -181,6 +183,7 @@ class IntentSpec(models.Model):
             auth_method=data.get('auth_method', 'none'),
             vague_intent=data.get('vague_intent', False),
             explanation=data.get('explanation', ""),
+            creative_vision=data.get('creative_vision', ""),
         )
 
 

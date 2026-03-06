@@ -118,12 +118,7 @@ class PipelineOrchestrator:
                 "stack": intent_spec.stack.model_dump(),
                 "api_type": intent_spec.api_type,
                 "auth_method": intent_spec.auth_method,
-                "complexity": 'minimal'
-            })
-            self.action_logger.log('spec_building', 'spec_builder', 'built_intent_spec', {
-                "stack": intent_spec.stack.model_dump(),
-                "api_type": intent_spec.api_type,
-                "auth_method": intent_spec.auth_method,
+                "creative_vision": intent_spec.creative_vision,
                 "complexity": 'minimal'
             })
             is_valid, errors = validate_intent_spec(intent_spec)

@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useTheme } from '../context/ThemeContext';
 import LoginPage from './LoginPage';
-
 export default function LandingPage() {
     const navigate = useNavigate();
     const { isAuthenticated, user } = useAuth();
-    const { isDark, toggleTheme } = useTheme();
     const [isLoginOpen, setIsLoginOpen] = useState(false);
 
     const pipelineStages = [
@@ -74,29 +71,14 @@ export default function LandingPage() {
                     </div>
                 </div>
 
-                {/* Right Side: Toggle + Login/Dashboard */}
+                {/* Right Side: Login/Dashboard */}
                 <div className="flex items-center gap-6">
-                    <button
-                        onClick={toggleTheme}
-                        className="p-2 transition-transform duration-200 hover:scale-110 group"
-                        title="Toggle Theme"
-                    >
-                        <span className="group-hover:scale-110 transition-transform inline-block">
-                            {isDark ? (
-                                <svg className="w-6 h-6 text-[rgb(var(--color-primary))]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z" />
-                                </svg>
-                            ) : (
-                                <svg className="w-6 h-6 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                                </svg>
-                            )}
-                        </span>
-                    </button>
 
                     {!isAuthenticated ? (
                         <button
-                            onClick={() => setIsLoginOpen(true)}
+                            onClick={() => {
+                                window.location.href = `http://localhost:8000/accounts/github/login/?process=login&theme=dark`;
+                            }}
                             className="text-label opacity-60 hover:opacity-100 transition-opacity"
                         >
                             Log In / Register

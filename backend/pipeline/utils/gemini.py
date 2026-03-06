@@ -1,5 +1,6 @@
 import time
 from google import genai
+from google.genai import types
 from core.logger import get_logger
 from ..rotation_manager import RotationManager
 
@@ -56,18 +57,32 @@ def _extract_retry_seconds(e: Exception) -> float | None:
 
     return None
 
+def _build_config(config: dict) -> types.GenerateContentConfig:
+    """
+    Convert a plain config dict into a GenerateContentConfig object.
+    Handles response_schema specially since it must be typed (Pydantic class),
+    not serialized as a dict value.
+    """
+    config = dict(config)  # don't mutate caller's dict
+    response_schema = config.pop("response_schema", None)
+    gen_config = types.GenerateContentConfig(**config)
+    if response_schema is not None:
+        gen_config.response_schema = response_schema
+    return gen_config
+
 def gemini_call_with_retry(model_name: str, contents, config: dict, max_retries: int = 5, on_exhaustion=None):
     """
     Wrapper around _client.models.generate_content() with automatic retry.
     """
     for attempt in range(max_retries + 1):
         config.setdefault("temperature", 0.2)
+        gen_config = _build_config(config)
 
         try:
             return _client.models.generate_content(
                 model=model_name,
                 contents=contents,
-                config=config,
+                config=gen_config,
             )
         except Exception as e:
             if not _is_retryable(e):
@@ -75,9 +90,15 @@ def gemini_call_with_retry(model_name: str, contents, config: dict, max_retries:
 
             wait = _extract_retry_seconds(e)
 
-            # Daily Quota Circuit Breaker
-            message = getattr(e, 'message', '').lower()
-            if "perday" in message or "daily" in message:
+            # Daily Quota / Resource Exhaustion Circuit Breaker
+            # Gemini uses many different phrasings — match them all
+            message = getattr(e, 'message', str(e)).lower()
+            _quota_keywords = (
+                "perday", "daily", "quota", "exceeded", "resource_exhausted",
+                "ratequotaexceeded", "quotaexceeded", "billing", "plan",
+            )
+            is_quota_exhaustion = any(kw in message for kw in _quota_keywords)
+            if is_quota_exhaustion:
                 if on_exhaustion:
                     logger.info("Daily Limit hit. Attempting Mid-Run Rotation...")
                     on_exhaustion()
@@ -109,9 +130,14 @@ def gemini_embed_with_retry(model_name: str, contents, max_retries: int = 5, on_
 
             wait = _extract_retry_seconds(e)
 
-            # Daily Quota Circuit Breaker
-            message = getattr(e, 'message', '').lower()
-            if "perday" in message or "daily" in message:
+            # Daily Quota / Resource Exhaustion Circuit Breaker
+            message = getattr(e, 'message', str(e)).lower()
+            _quota_keywords = (
+                "perday", "daily", "quota", "exceeded", "resource_exhausted",
+                "ratequotaexceeded", "quotaexceeded", "billing", "plan",
+            )
+            is_quota_exhaustion = any(kw in message for kw in _quota_keywords)
+            if is_quota_exhaustion:
                 if on_exhaustion:
                     logger.info("Daily Limit hit on Embedding. Attempting Mid-Run Rotation...")
                     on_exhaustion()
