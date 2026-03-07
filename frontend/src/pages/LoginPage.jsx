@@ -224,7 +224,8 @@ export default function AuthDrawer({ isOpen, onClose }) {
                     </div>
                     <button
                         onClick={() => {
-                            window.location.href = `http://localhost:8000/accounts/github/login/?process=login&theme=dark`;
+                            const baseUrl = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:8000';
+                            window.location.href = `${baseUrl}/accounts/github/login/?process=login&theme=dark`;
                         }}
                         className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-[rgb(var(--bg-primary))] transition-transform hover:scale-[1.02] text-[rgb(var(--text-primary))] border border-[rgb(var(--border-primary))] shadow-sm"
                     >

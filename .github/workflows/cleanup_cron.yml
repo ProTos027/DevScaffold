@@ -1,0 +1,36 @@
+name: Daily Cleanup Cron Job
+
+on:
+  schedule:
+    # Run at 02:00 UTC every day
+    - cron: '0 2 * * *'
+  # Allow manual trigger from the GitHub Actions tab
+  workflow_dispatch:
+
+jobs:
+  run-cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger DevScaffold Storage Cleanup
+        env:
+          API_URL: ${{ secrets.DEVSCAFFOLD_API_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET_KEY }}
+        run: |
+          echo "Triggering cleanup at $API_URL/api/storage/cleanup/"
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/storage/cleanup/" \
+            -H "X-Cron-Secret: $CRON_SECRET" \
+            -H "Content-Type: application/json")
+          
+          # Extract the body and HTTP status code from curl output
+          HTTP_BODY=$(echo "$RESPONSE" | head -n -1)
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n 1)
+          
+          echo "Response Status: $HTTP_STATUS"
+          echo "Response Body: $HTTP_BODY"
+          
+          if [ "$HTTP_STATUS" -ne 200 ]; then
+            echo "::error::Cleanup ping failed with status $HTTP_STATUS"
+            exit 1
+          fi
+          
+          echo "Cleanup ping successful!"
