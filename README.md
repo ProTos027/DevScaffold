@@ -4,29 +4,31 @@ DevScaffold is an advanced agentic coding platform that transforms natural langu
 
 ## 🌟 Key Features
 
-- **Intent-to-Code Pipeline**: Converts fuzzy user prompts into precise architectural specifications.
-- **Architectural Manifests (Folder Contracts)**: A dedicated agent defines the file structure and inter-component dependencies before a single line of code is written.
-- **Pure LLM Boilerplating**: Eschews static templates for dynamic, framework-agnostic generation (supports Spring Boot, FastAPI, Express, Django, etc.).
-- **Real-Time Progress Tracking**: Watch the pipeline work through Stage 1 (Spec) to Stage 7 (Assembling) in real-time.
-- **Deterministic Complexity Reduction**: Every stage in the pipeline strictly decreases entropy, ensuring the final code matches the initial intent.
+- **Intent-to-Code Pipeline**: Converts fuzzy user prompts into precise architectural specifications using a 5-stage assembly line.
+- **Creative Vision Propagation**: stylistic nuances (e.g., "90s terminal", "cosmic gold") are preserved across all agents.
+- **Absolute Dark Mode**: Premium, dark-themed UI by default, enforced at both the platform and generated code levels.
+- **Architectural Manifests**: A centralized "Source of Truth" (Manifest) ensures all agents align on naming and interfaces.
+- **Stack-Agnostic Generation**: Dynamically implements logic for Spring Boot, FastAPI, Django, Express, React, Vue, etc.
+- **Real-Time Progress Tracking**: Granular visibility into the agentic reasoning and file generation process.
 
-## 🏗️ Architecture
+## 🏗️ Architecture (The Assembly Line)
 
-The pipeline consists of specialized Gemini agents:
+DevScaffold uses a multi-phased pipeline to minimize entropy and maximize code quality:
 
-1.  **Spec Builder**: Parses natural language into an `Intent Spec`.
-2.  **Validator**: Ensures the spec is architecturally sound.
-3.  **Contract Builder**: Plans high-level components and responsibilities.
-4.  **Dependency Graph Builder**: Determines the optimal build order.
-5.  **Folder Contract Builder**: Defines the concrete file structure (The "Blueprint").
-6.  **Code Generator**: Writes the implementation files anchored to the Folder Contracts.
-7.  **Assembler**: Packages the results into a downloadable ZIP.
+1.  **Stage 1: Spec Builder**: Parses natural language into a structured `Intent Spec`.
+2.  **Stage 2: Prompt Expander**: Research-driven expansion of the domain to guide implementation details.
+3.  **Stage 3: Contract Builder**: Acts as the Architect, locking down file structures and API schemas.
+4.  **Stage 4: Generation Engine**: 
+    - **Backend**: Implements business logic and data persistence.
+    - **Frontend**: Implements the UI and API integration.
+    - **Infrastructure**: Generates READMEs, Dockerfiles, and environment configs.
+5.  **Stage 5: Assembler**: Validates, packages, and zips the final repository.
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Python 3.12+, Django, Django REST Framework, PostgreSQL.
-- **Frontend**: React, Vite, CSS Modules.
-- **AI Engine**: Google Gemini (v1.5/2.0/2.5) via Google GenAI SDK.
+- **Backend**: Python 3.12, Django 5.x, PostgreSQL.
+- **Frontend**: React 18, Vite, Tailwind CSS (Mobile Responsive, Dark Mode Only).
+- **AI Engine**: Google Gemini (Direct Prototyping & Generation).
 
 ## 🚀 Getting Started
 

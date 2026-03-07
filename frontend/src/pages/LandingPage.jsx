@@ -76,9 +76,7 @@ export default function LandingPage() {
 
                     {!isAuthenticated ? (
                         <button
-                            onClick={() => {
-                                window.location.href = `http://localhost:8000/accounts/github/login/?process=login&theme=dark`;
-                            }}
+                            onClick={() => setIsLoginOpen(true)}
                             className="text-label opacity-60 hover:opacity-100 transition-opacity"
                         >
                             Log In / Register

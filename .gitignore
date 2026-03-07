@@ -1,5 +1,6 @@
 # Common
 .DS_Store
+Thumbs.db
 .env
 .env.local
 .venv
@@ -10,14 +11,18 @@ dist/
 build/
 *.log
 
+# AI & Pipeline
+.gemini/
+backend/knowledge/.cache/
+backend/storage/generated_repos/
+backend/storage/temp/
+backend/storage/*.zip
+
 # Backend (Python/Django)
 __pycache__/
 *.py[cod]
 *$py.class
 db.sqlite3
-backend/storage/generated_repos/
-backend/storage/temp/
-backend/storage/*.zip
 backend/tests/
 
 # Frontend (Node/React)

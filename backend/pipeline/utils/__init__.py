@@ -12,5 +12,4 @@ from .gemini import (
     gemini_embed_with_retry,
     format_gemini_error,
 )
-from .common import logger
 from .graph import topological_sort  # noqa: F401 (export for consumers)
