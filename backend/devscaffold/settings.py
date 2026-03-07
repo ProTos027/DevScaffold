@@ -12,8 +12,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-development-key-change-in-production')
 
-# DEBUG is temporarily True to find the production 500 error
-DEBUG = True
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,devscaffold-api.onrender.com').split(',')
 
@@ -207,12 +207,14 @@ LOGIN_REDIRECT_URL = config('FRONTEND_URL', default='http://localhost:5173') + '
 
 SOCIALACCOUNT_PROVIDERS = {
     'github': {
+        'APP': {
+            'client_id': config('GITHUB_CLIENT_ID', default=''),
+            'secret': config('GITHUB_CLIENT_SECRET', default=''),
+        },
         'SCOPE': [
             'user',
             'repo',
         ],
-        # Note: APP config removed - using database SocialApp instead
-        # to avoid MultipleObjectsReturned error
     }
 }
 
