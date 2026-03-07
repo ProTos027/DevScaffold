@@ -55,8 +55,36 @@ DevScaffold uses a multi-phased pipeline to minimize entropy and maximize code q
 2.  Install dependencies: `npm install`.
 3.  Start dev server: `npm run dev`.
 
+## ⚙️ Environment Variables
+
+### Backend (`backend/.env`)
+| Variable | Description |
+| :--- | :--- |
+| `ENCRYPTION_KEY` | **CRITICAL**: 44-byte Fernet key for API storage. Use `cryptography.fernet.Fernet.generate_key()` to create one. |
+| `GITHUB_CLIENT_ID` | OAuth Client ID from GitHub Developers portal. |
+| `GITHUB_CLIENT_SECRET` | OAuth Client Secret from GitHub Developers portal. |
+| `STORAGE_PATH` | Path where repositories are built (default: `storage/generated_repos`). |
+| `REPO_RETENTION_HOURS`| Hours before a project is deleted (default: `24`). |
+
+### Frontend (`frontend/.env`)
+| Variable | Description |
+| :--- | :--- |
+| `VITE_API_URL` | Full URL to the backend API (e.g., `https://api.example.com/api`). |
+
+## 🌐 Production Deployment
+
+### Backend (Render)
+- **Runtime**: Python 3.
+- **Auto-Sanitization**: The code automatically strips quotes and whitespace from `ENCRYPTION_KEY` to prevent common cloud configuration errors.
+- **Diagnostics**: The server performs a `STATIC_CHECK` at startup and logs results to ensure encryption is active.
+
+### Frontend (Vercel)
+- **Rewrites**: Includes `vercel.json` for SPA routing, ensuring 404s on refresh are resolved.
+
+## 🧹 Maintenance & Storage
+- **Ephemeral Filesystem**: Note that standard Render/Vercel storage is non-persistent. Generated project files are wiped during redeployment.
+- **Cleanup Cron**: A GitHub Action (`.github/workflows/cleanup_cron.yml`) is included to trigger a secure webhook for repository cleanup every 24 hours.
+
 ## 📜 License
 
 This project is licensed under the MIT License - see the `LICENSE` file for details.
-
----
