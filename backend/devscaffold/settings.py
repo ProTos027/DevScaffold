@@ -170,11 +170,11 @@ CORS_ALLOWED_ORIGINS = config(
 CORS_ALLOW_CREDENTIALS = True
 
 
-# CSRF Settings for OAuth
-CSRF_TRUSTED_ORIGINS = [
-    'http://localhost:5173',
-    'http://localhost:8000',
-]
+# CSRF Settings for Admin and OAuth
+CSRF_TRUSTED_ORIGINS = config(
+    'CORS_ALLOWED_ORIGINS',
+    default='http://localhost:5173,http://localhost:8000'
+).split(',')
 
 
 # Django Allauth (for GitHub OAuth)
