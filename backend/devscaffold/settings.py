@@ -77,16 +77,15 @@ TEMPLATES = [
 WSGI_APPLICATION = 'devscaffold.wsgi.application'
 
 
+import dj_database_url
+
 # PostgreSQL configuration (production)
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': config('DB_NAME', default='devscaffold'),
-        'USER': config('DB_USER', default='postgres'),
-        'PASSWORD': config('DB_PASSWORD', default='postgres'),
-        'HOST': config('DB_HOST', default='localhost'),
-        'PORT': config('DB_PORT', default='5432'),
-    }
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL', default=f"postgres://{config('DB_USER', default='postgres')}:{config('DB_PASSWORD', default='postgres')}@{config('DB_HOST', default='localhost')}:{config('DB_PORT', default='5432')}/{config('DB_NAME', default='devscaffold')}"),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 }
 
 
