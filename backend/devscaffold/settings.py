@@ -233,6 +233,16 @@ REPO_RETENTION_HOURS = config('REPO_RETENTION_HOURS', default=24, cast=int)
 _raw_key = config('ENCRYPTION_KEY', default='').strip("'\" ")
 ENCRYPTION_KEY = _raw_key.encode() if _raw_key else None
 
+# Boot-time validation to catch config errors early in logs
+if ENCRYPTION_KEY:
+    try:
+        from cryptography.fernet import Fernet
+        Fernet(ENCRYPTION_KEY)
+    except Exception as e:
+        import logging
+        # We log the length to help diagnose padding/copy-paste issues without leaking the key
+        logging.error(f"STATIC_CHECK: ENCRYPTION_KEY is INVALID. Length: {len(_raw_key)}. Error: {str(e)}")
+
 
 # Site Configuration
 SITE_DOMAIN = config('SITE_DOMAIN', default='localhost:8000')
