@@ -78,8 +78,7 @@ class GeneratedFilesResponse(BaseModel):
         description="Markdown summary of the ACTUAL implementation shapes: Pydantic models (with all fields), specific DTOs, and full endpoint signatures. Downstream phases MUST use these exact shapes."
     )
     cross_layer_contracts: CrossLayerContractSchema = Field(
-        default_factory=CrossLayerContractSchema,
-        description="Typed synchronization facts for downstream phases. Populate ALL fields accurately."
+        default_factory=CrossLayerContractSchema
     )
 
 # for intent spec
@@ -95,7 +94,7 @@ class BackendComponent(BaseModel):
 
 class StackSchema(BaseModel):
     """Typed technology stack specification."""
-    backend: BackendComponent = Field(..., description="Backend is mandatory")
+    backend: BackendComponent = Field(...)
     frontend: StackComponent = Field(default_factory=StackComponent)
     database: StackComponent = Field(default_factory=StackComponent)
 
@@ -132,10 +131,7 @@ class IntentSpecSchema(BaseModel):
         description="Detailed project type (e.g., 'url_shortener', 'todo_app', 'ecommerce_api')"
     )
     
-    stack: StackSchema = Field(
-        default_factory=StackSchema,
-        description="Technology stack details including frameworks and versions."
-    )
+    stack: StackSchema = Field(default_factory=StackSchema)
     
     api_type: Literal['rest', 'graphql', 'none'] = Field(
         default='rest',
