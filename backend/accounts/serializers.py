@@ -92,12 +92,14 @@ class APIKeySerializer(serializers.ModelSerializer):
         api_key = validated_data.pop('api_key', None)
         user = self.context['request'].user
         try:
-            instance = APIKey.objects.create(user=user, **validated_data)
+            # Instantiate without saving to DB yet
+            instance = APIKey(user=user, **validated_data)
             if api_key:
-                instance.set_api_key(api_key)
-                instance.save()
+                instance.set_api_key(api_key) # This performs encryption and sets field
+            instance.save() # Atomic save after encryption check
             return instance
         except ValueError as e:
+            # Catching the ValueError from set_api_key() or encryption failure
             raise serializers.ValidationError({"api_key": str(e)})
 
     def update(self, instance, validated_data):
