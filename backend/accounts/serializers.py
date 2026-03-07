@@ -91,19 +91,25 @@ class APIKeySerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         api_key = validated_data.pop('api_key', None)
         user = self.context['request'].user
-        instance = APIKey.objects.create(user=user, **validated_data)
-        if api_key:
-            instance.set_api_key(api_key)
-            instance.save()
-        return instance
+        try:
+            instance = APIKey.objects.create(user=user, **validated_data)
+            if api_key:
+                instance.set_api_key(api_key)
+                instance.save()
+            return instance
+        except ValueError as e:
+            raise serializers.ValidationError({"api_key": str(e)})
 
     def update(self, instance, validated_data):
         api_key = validated_data.pop('api_key', None)
-        if api_key:
-            instance.set_api_key(api_key)
-        
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        
-        instance.save()
-        return instance
+        try:
+            if api_key:
+                instance.set_api_key(api_key)
+            
+            for attr, value in validated_data.items():
+                setattr(instance, attr, value)
+            
+            instance.save()
+            return instance
+        except ValueError as e:
+            raise serializers.ValidationError({"api_key": str(e)})
