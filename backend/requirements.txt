@@ -21,6 +21,7 @@ django-allauth==0.61.1
 python-decouple==3.8
 
 # LangGraph & LangChain
+google-genai>=0.1.2
 langgraph>=0.0.38
 langchain>=0.1.12
 langchain-google-genai>=1.0.1
