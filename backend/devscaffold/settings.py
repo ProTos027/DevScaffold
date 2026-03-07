@@ -230,7 +230,8 @@ REPO_RETENTION_HOURS = config('REPO_RETENTION_HOURS', default=24, cast=int)
 
 
 # Encryption for API Keys
-ENCRYPTION_KEY = config('ENCRYPTION_KEY', default='').encode() if config('ENCRYPTION_KEY', default='') else None
+_raw_key = config('ENCRYPTION_KEY', default='').strip("'\" ")
+ENCRYPTION_KEY = _raw_key.encode() if _raw_key else None
 
 
 # Site Configuration
