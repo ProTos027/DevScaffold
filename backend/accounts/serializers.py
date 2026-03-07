@@ -100,6 +100,7 @@ class APIKeySerializer(serializers.ModelSerializer):
             return instance
         except ValueError as e:
             # Catching the ValueError from set_api_key() or encryption failure
+            logger.error(f"Validation Error during key creation: {str(e)}")
             raise serializers.ValidationError({"api_key": str(e)})
 
     def update(self, instance, validated_data):
@@ -114,4 +115,5 @@ class APIKeySerializer(serializers.ModelSerializer):
             instance.save()
             return instance
         except ValueError as e:
+            logger.error(f"Validation Error during key update: {str(e)}")
             raise serializers.ValidationError({"api_key": str(e)})

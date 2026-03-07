@@ -417,7 +417,11 @@ export default function DashboardPage() {
                                         setUserApiKeys(Array.isArray(data) ? data : (data?.results || []));
                                         checkGeminiKeys();
                                     } catch (error) {
-                                        alert(error.response?.data?.name?.[0] || error.response?.data?.detail || 'Failed to add API key');
+                                        const errorData = error.response?.data;
+                                        const errorMessage = errorData
+                                            ? (errorData.api_key?.[0] || errorData.name?.[0] || errorData.detail || JSON.stringify(errorData))
+                                            : error.message;
+                                        alert('Failed to add API key: ' + errorMessage);
                                     }
                                 }} className="space-y-5">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
