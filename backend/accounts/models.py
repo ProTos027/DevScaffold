@@ -3,6 +3,9 @@ from django.db import models
 from django.utils import timezone
 from cryptography.fernet import Fernet
 from django.conf import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class UserManager(BaseUserManager):
