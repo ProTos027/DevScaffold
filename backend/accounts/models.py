@@ -137,8 +137,14 @@ class APIKey(models.Model):
     def set_api_key(self, api_key):
         """Encrypt and store the API key."""
         if api_key:
-            fernet = Fernet(settings.ENCRYPTION_KEY)
-            self.api_key_encrypted = fernet.encrypt(api_key.encode()).decode()
+            if not settings.ENCRYPTION_KEY:
+                raise ValueError("ENCRYPTION_KEY is not set in environment variables. Cannot secure API key.")
+            try:
+                fernet = Fernet(settings.ENCRYPTION_KEY)
+                # Strip whitespace to prevent common 'Missing key inputs' auth failures
+                self.api_key_encrypted = fernet.encrypt(api_key.strip().encode()).decode()
+            except Exception as e:
+                raise ValueError(f"Encryption failed. Ensure ENCRYPTION_KEY is a valid Fernet key: {str(e)}")
     
     def get_api_key(self):
         """Decrypt and return the API key."""

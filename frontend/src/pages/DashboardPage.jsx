@@ -334,6 +334,9 @@ export default function DashboardPage() {
                                     onChange={(e) => setProjectName(e.target.value)}
                                     className="input-field w-full text-xl py-5 px-6 !bg-[rgb(var(--bg-secondary)/0.5)] border-[rgb(var(--border-primary))] transition-all font-display"
                                     placeholder="e.g. Banking Platform"
+                                    data-gramm="false"
+                                    data-quillbot-element="false"
+                                    spellCheck="false"
                                 />
                             </div>
 
@@ -345,6 +348,9 @@ export default function DashboardPage() {
                                     className="input-field w-full h-48 resize-none py-5 px-6 !bg-[rgb(var(--bg-secondary)/0.5)] border-[rgb(var(--border-primary))] transition-all leading-relaxed"
                                     placeholder="Describe your vision... (e.g. Build a real estate portal with AI-driven valuation and Mapbox integration)"
                                     required
+                                    data-gramm="false"
+                                    data-quillbot-element="false"
+                                    spellCheck="false"
                                 />
                             </div>
 
@@ -430,6 +436,9 @@ export default function DashboardPage() {
                                                 className="input-field w-full text-xs py-3"
                                                 placeholder="e.g. Production Engine"
                                                 required
+                                                data-gramm="false"
+                                                data-quillbot-element="false"
+                                                spellCheck="false"
                                             />
                                         </div>
                                     </div>
@@ -442,6 +451,9 @@ export default function DashboardPage() {
                                             className="input-field w-full text-xs py-3"
                                             placeholder="AIza..."
                                             required
+                                            data-gramm="false"
+                                            data-quillbot-element="false"
+                                            spellCheck="false"
                                         />
                                     </div>
                                     <button type="submit" className="w-full py-4 rounded-2xl bg-cosmic-cyan/10 hover:bg-cosmic-cyan/20 border border-[rgb(var(--border-primary))] transition-all font-bold text-xs uppercase tracking-widest text-cosmic-cyan">

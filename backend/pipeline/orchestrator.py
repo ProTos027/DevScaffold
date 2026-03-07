@@ -29,7 +29,11 @@ class PipelineOrchestrator:
         self.api_key_obj = RotationManager.get_best_key(self.user, provider=self.model_provider)
         
         if self.api_key_obj:
-            utils.set_client(self.api_key_obj.get_api_key())
+            decrypted_key = self.api_key_obj.get_api_key()
+            if not decrypted_key or not decrypted_key.strip():
+                raise ValueError(f"API Key '{self.api_key_obj.name}' is empty or invalid. Please delete and re-add it.")
+            
+            utils.set_client(decrypted_key)
             logger.info(f"Auto-Rotation: Using API Key '{self.api_key_obj.name}'")
         else:
             from accounts.models import APIKey
