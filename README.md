@@ -60,30 +60,37 @@ DevScaffold uses a multi-phased pipeline to minimize entropy and maximize code q
 ### Backend (`backend/.env`)
 | Variable | Description |
 | :--- | :--- |
-| `ENCRYPTION_KEY` | **CRITICAL**: 44-byte Fernet key for API storage. Use `cryptography.fernet.Fernet.generate_key()` to create one. |
+| `ENCRYPTION_KEY` | **CRITICAL**: 44-byte Fernet key for API storage. |
 | `GITHUB_CLIENT_ID` | OAuth Client ID from GitHub Developers portal. |
 | `GITHUB_CLIENT_SECRET` | OAuth Client Secret from GitHub Developers portal. |
-| `STORAGE_PATH` | Path where repositories are built (default: `storage/generated_repos`). |
+| `AWS_ACCESS_KEY_ID` | AWS IAM Access Key for S3 storage. |
+| `AWS_SECRET_ACCESS_KEY` | AWS IAM Secret Access Key for S3 storage. |
+| `AWS_STORAGE_BUCKET_NAME`| Your unique S3 bucket name. |
+| `AWS_S3_REGION_NAME` | S3 bucket region (e.g., `ap-south-2`). |
 | `REPO_RETENTION_HOURS`| Hours before a project is deleted (default: `24`). |
 
 ### Frontend (`frontend/.env`)
 | Variable | Description |
 | :--- | :--- |
-| `VITE_API_URL` | Full URL to the backend API (e.g., `https://api.example.com/api`). |
+| `VITE_API_URL` | Full URL to the backend API. |
 
 ## 🌐 Production Deployment
 
 ### Backend (Render)
 - **Runtime**: Python 3.
-- **Auto-Sanitization**: The code automatically strips quotes and whitespace from `ENCRYPTION_KEY` to prevent common cloud configuration errors.
-- **Diagnostics**: The server performs a `STATIC_CHECK` at startup and logs results to ensure encryption is active.
+- **S3 Persistence**: All project repositories and ZIP files are stored in AWS S3. This ensures data survives Render's ephemeral disk wipes during redeployment.
+- **Auto-Sanitization**: The code automatically strips quotes and whitespace from `ENCRYPTION_KEY`.
 
 ### Frontend (Vercel)
-- **Rewrites**: Includes `vercel.json` for SPA routing, ensuring 404s on refresh are resolved.
+- **Responsive**: The UI is now fully optimized for mobile devices using native viewport scaling.
 
 ## 🧹 Maintenance & Storage
-- **Ephemeral Filesystem**: Note that standard Render/Vercel storage is non-persistent. Generated project files are wiped during redeployment.
-- **Cleanup Cron**: A GitHub Action (`.github/workflows/cleanup_cron.yml`) is included to trigger a secure webhook for repository cleanup every 24 hours.
+- **Cleanup Cron**: A GitHub Action (`.github/workflows/cleanup_cron.yml`) triggers a secure cleanup of expired repositories every 24 hours.
+- **Manual Cleanup**: You can run the cleanup command manually from the backend directory:
+  ```bash
+  python manage.py cleanup_repos
+  ```
+  Add `--dry-run` to see what would be deleted without actually removing files.
 
 ## 📜 License
 
