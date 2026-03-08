@@ -242,6 +242,7 @@ if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
 else:
     DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
     PROJECT_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    MEDIA_ROOT = STORAGE_PATH
 
 REPO_RETENTION_HOURS = config('REPO_RETENTION_HOURS', default=24, cast=int)
 
