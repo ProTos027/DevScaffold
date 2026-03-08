@@ -226,6 +226,23 @@ SOCIALACCOUNT_REQUESTS_TIMEOUT = 30  # seconds
 STORAGE_PATH = BASE_DIR / config('STORAGE_PATH', default='storage/generated_repos')
 STORAGE_PATH.mkdir(parents=True, exist_ok=True)
 
+# AWS S3 Configuration
+AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID', default=None)
+AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY', default=None)
+AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME', default=None)
+AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='us-east-1')
+AWS_S3_SIGNATURE_VERSION = 's3v4'
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+
+if AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY and AWS_STORAGE_BUCKET_NAME:
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    # Use S3 for project uploads
+    PROJECT_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+else:
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    PROJECT_STORAGE = 'django.core.files.storage.FileSystemStorage'
+
 REPO_RETENTION_HOURS = config('REPO_RETENTION_HOURS', default=24, cast=int)
 
 

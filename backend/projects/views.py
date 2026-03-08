@@ -234,31 +234,43 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
             
-        repo_path = Path(project.repo_directory)
-        if not repo_path.exists():
-            return Response(
-                {'detail': 'Repository directory not found'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-            
-        def get_file_tree(path, root_path):
+        from django.core.files.storage import default_storage
+        
+        def get_file_tree(prefix, root_prefix):
             items = []
-            for item in sorted(path.iterdir(), key=lambda x: (not x.is_dir(), x.name)):
-                if item.name == '.git' or item.name == '__pycache__':
-                    continue
-                    
-                relative_path = str(item.relative_to(root_path))
-                node = {
-                    'name': item.name,
-                    'path': relative_path,
-                    'is_dir': item.is_dir(),
-                }
-                if item.is_dir():
-                    node['children'] = get_file_tree(item, root_path)
-                items.append(node)
+            try:
+                dirs, files = default_storage.listdir(prefix)
+                
+                # Handle files
+                for f in sorted(files):
+                    if f in ('.git', '__pycache__', 'manifest.json'):
+                        continue
+                    full_p = f"{prefix}/{f}".replace('//', '/')
+                    rel_p = full_p.replace(root_prefix, '').lstrip('/')
+                    items.append({
+                        'name': f,
+                        'path': rel_p,
+                        'is_dir': False
+                    })
+                
+                # Handle directories
+                for d in sorted(dirs):
+                    if d in ('.git', '__pycache__'):
+                        continue
+                    full_p = f"{prefix}/{d}".replace('//', '/')
+                    rel_p = full_p.replace(root_prefix, '').lstrip('/')
+                    items.append({
+                        'name': d,
+                        'path': rel_p,
+                        'is_dir': True,
+                        'children': get_file_tree(full_p, root_prefix)
+                    })
+            except Exception as e:
+                logger.error(f"Error listing storage {prefix}: {e}")
+                
             return items
             
-        tree = get_file_tree(repo_path, repo_path)
+        tree = get_file_tree(project.repo_directory, project.repo_directory)
         return Response(tree)
 
     @action(detail=True, methods=['get'])
@@ -282,28 +294,23 @@ class ProjectViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
             
-        repo_path = Path(project.repo_directory)
-        full_path = (repo_path / file_path_rel).resolve()
+        from django.core.files.storage import default_storage
+        storage_path = f"{project.repo_directory}/{file_path_rel}".replace('//', '/')
         
-        # Security check: ensure path is within repo_directory
-        if not str(full_path).startswith(str(repo_path.resolve())):
-            return Response(
-                {'detail': 'Access denied'},
-                status=status.HTTP_403_FORBIDDEN
-            )
-            
-        if not full_path.exists() or not full_path.is_file():
+        if not default_storage.exists(storage_path):
             return Response(
                 {'detail': 'File not found'},
                 status=status.HTTP_404_NOT_FOUND
             )
             
         try:
-            with open(full_path, 'r', encoding='utf-8') as f:
+            with default_storage.open(storage_path, 'r') as f:
                 content = f.read()
+                if isinstance(content, bytes):
+                    content = content.decode('utf-8')
             
             # Determine language for Monaco
-            ext = full_path.suffix.lower()
+            ext = Path(file_path_rel).suffix.lower()
             language = 'plaintext'
             if ext in ['.js', '.jsx']: language = 'javascript'
             elif ext in ['.ts', '.tsx']: language = 'typescript'

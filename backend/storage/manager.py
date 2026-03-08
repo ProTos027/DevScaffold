@@ -12,10 +12,11 @@ def get_storage_path() -> Path:
     return settings.STORAGE_PATH
 
 
+from django.core.files.storage import default_storage
+
 def cleanup_expired_repositories():
     """
     Delete expired repositories based on deletion_scheduled_at.
-    This should be run as a periodic Celery task or management command.
     """
     from projects.models import Project
     
@@ -26,17 +27,28 @@ def cleanup_expired_repositories():
     )
     
     for project in expired_projects:
-        # Delete ZIP file
+        # 1. Delete ZIP file
         if project.zip_file_path:
-            zip_path = Path(project.zip_file_path)
-            if zip_path.exists():
-                zip_path.unlink()
+            if default_storage.exists(project.zip_file_path):
+                default_storage.delete(project.zip_file_path)
         
-        # Delete repository directory
+        # 2. Delete repository directory (Iterate and delete for S3)
         if project.repo_directory:
-            repo_dir = Path(project.repo_directory)
-            if repo_dir.exists():
-                shutil.rmtree(repo_dir)
+            try:
+                # S3 doesn't have directories, but we "list and delete" by prefix
+                # Django storage listdir returns (dirs, files)
+                def delete_recursive(prefix):
+                    dirs, files = default_storage.listdir(prefix)
+                    for f in files:
+                        default_storage.delete(f"{prefix}/{f}")
+                    for d in dirs:
+                        delete_recursive(f"{prefix}/{d}")
+                    # Note: S3 empty prefixes disappear automatically
+                
+                delete_recursive(project.repo_directory)
+            except Exception as e:
+                import logging
+                logging.error(f"Cleanup error for {project.id}: {e}")
         
         # Update project
         project.zip_file_path = None

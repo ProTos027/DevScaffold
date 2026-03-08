@@ -88,84 +88,91 @@ AVAILABLE_VERSIONS = {
 }
 
 
-def assemble_repository(project, intent_spec: IntentSpecSchema, generated_files: Dict[str, str], manifest=None, action_history: str = "") -> Path:
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+import tempfile
+import shutil
+
+def assemble_repository(project, intent_spec: IntentSpecSchema, generated_files: Dict[str, str], manifest=None, action_history: str = "") -> str:
     """
-    Verbatim Repository Assembly - Deterministic and Simple.
-    Writes every file to the exact path provided by the Generation Engine.
+    Assembles the repository and uploads to storage (S3 or Local).
+    Returns the storage path of the ZIP file.
     """
-    # Create project directory
     project_name = f"project_{project.id}"
-    project_dir = settings.STORAGE_PATH / project_name
-    if project_dir.exists():
-        import shutil
-        shutil.rmtree(project_dir)
-    project_dir.mkdir(parents=True, exist_ok=True)
-    
-    backend = intent_spec.stack.backend
+    backend_framework = intent_spec.stack.backend.framework if intent_spec.stack.backend else None
 
-    # 1. Validate against Manifest Layout (Non-blocking)
-    if manifest and manifest.directory_layout:
-        expected_paths = set()
-        for contract in manifest.directory_layout:
-            folder = contract.get('folder', '').strip('/')
-            for filename in contract.get('files', []):
-                # Reconstruct the full path as expected in generated_files keys
-                full_path = f"{folder}/{filename}" if folder else filename
-                expected_paths.add(full_path)
+    # Use a temporary directory for local assembly before uploading
+    with tempfile.TemporaryDirectory() as temp_dir_name:
+        temp_dir = Path(temp_dir_name)
         
-        actual_paths = set(generated_files.keys())
-        missing = expected_paths - actual_paths
-        extra = actual_paths - expected_paths
-        
-        if missing:
-            logger.warning(f"ASSEMBLY WARNING: {len(missing)} files missing from Manifest layout: {list(missing)[:5]}...")
-        if extra:
-            logger.info(f"ASSEMBLY INFO: {len(extra)} files generated outside of Manifest layout: {list(extra)[:5]}...")
+        # 1. Write files locally first (easier for zipping and __init__.py generation)
+        for filepath, content in generated_files.items():
+            normalized = filepath.lstrip('/').lstrip('\\').replace('\\', '/')
+            file_path = temp_dir / normalized
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            if filepath.lower() == 'readme.md' and action_history:
+                content += f"\n\n---\n\n## DevScaffold Pipeline Report\n\n```text\n{action_history}\n```\n"
 
-    # 2. Process all files verbatim
-    for filepath, content in generated_files.items():
-        # Path normalization: strip leading slashes to prevent pathlib treating path as absolute
-        # e.g. '/README.md' would resolve to 'C:\README.md' without this
-        normalized = filepath.lstrip('/').lstrip('\\').replace('\\', '/')
-        file_path = project_dir / normalized
-        
-        # Ensure parent directory exists
-        file_path.parent.mkdir(parents=True, exist_ok=True)
-        
-        # Inject Action Logger summary into README.md
-        if filepath.lower() == 'readme.md' and action_history:
-            content += f"\n\n---\n\n## DevScaffold Pipeline Report\n\n```text\n{action_history}\n```\n"
+            file_path.write_text(content, encoding='utf-8')
+            
+            # Python __init__.py generation
+            if backend_framework and 'backend/' in filepath and file_path.suffix == '.py':
+                parent = file_path.parent
+                backend_base = temp_dir / 'backend'
+                while parent.is_relative_to(backend_base):
+                    init = parent / '__init__.py'
+                    if not init.exists():
+                        init.write_text('', encoding='utf-8')
+                    parent = parent.parent
 
-        # Write the file
-        file_path.write_text(content, encoding='utf-8')
-        
-        # Add __init__.py for Python backend directories (Ensures valid packages)
-        if backend and 'backend/' in filepath and file_path.suffix == '.py':
-            backend_base = project_dir / 'backend'
-            parent = file_path.parent
-            while parent != backend_base and parent != project_dir:
-                init = parent / '__init__.py'
-                if not init.exists():
-                    init.write_text('', encoding='utf-8')
-                parent = parent.parent
+        # Add manifest.json
+        if manifest:
+            import json
+            backend_dir = temp_dir / 'backend'
+            if backend_dir.exists():
+                (backend_dir / 'manifest.json').write_text(json.dumps(manifest.to_json(), indent=2))
 
-    # 2. Save Physical Manifest (for RAG or debugging)
-    if manifest:
-        import json
-        backend_dir = project_dir / 'backend'
-        if backend_dir.exists():
-            manifest_path = backend_dir / 'manifest.json'
-            manifest_path.write_text(json.dumps(manifest.to_json(), indent=2), encoding='utf-8')
-    
-    # 3. Create ZIP file
-    zip_path = settings.STORAGE_PATH / f"{project_name}.zip"
-    create_zip(project_dir, zip_path)
-    
-    # Save project metadata
-    project.repo_directory = str(project_dir)
-    project.save()
-    
-    return zip_path
+        # 2. Create ZIP in the temp directory
+        temp_zip_path = Path(temp_dir_name + "_zip.zip")
+        create_zip(temp_dir, temp_zip_path)
+
+        # 3. Upload/Move to Final Storage
+        repo_storage_dir = f"projects/{project_name}"
+        zip_storage_path = f"projects/{project_name}.zip"
+
+        # Clear existing if local
+        if hasattr(settings, 'STORAGE_PATH') and not settings.AWS_STORAGE_BUCKET_NAME:
+            final_dir = settings.STORAGE_PATH / project_name
+            if final_dir.exists():
+                shutil.rmtree(final_dir)
+            final_zip = settings.STORAGE_PATH / f"{project_name}.zip"
+            if final_zip.exists():
+                final_zip.unlink()
+
+        # Upload files to storage (Individual files for browsing)
+        for root, _, files in os.walk(temp_dir):
+            for file in files:
+                local_file = Path(root) / file
+                rel_path = local_file.relative_to(temp_dir)
+                storage_path = f"{repo_storage_dir}/{rel_path}".replace('\\', '/')
+                with open(local_file, 'rb') as f:
+                    default_storage.save(storage_path, ContentFile(f.read()))
+
+        # Upload ZIP
+        with open(temp_zip_path, 'rb') as f:
+            default_storage.save(zip_storage_path, ContentFile(f.read()))
+
+        # Cleanup temp zip
+        if temp_zip_path.exists():
+            temp_zip_path.unlink()
+
+        # Update project model
+        project.repo_directory = repo_storage_dir
+        project.zip_file_path = zip_storage_path
+        project.save()
+
+        return zip_storage_path
 
 
 def create_zip(source_dir: Path, zip_path: Path):

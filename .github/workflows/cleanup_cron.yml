@@ -16,8 +16,16 @@ jobs:
           API_URL: ${{ secrets.DEVSCAFFOLD_API_URL }}
           CRON_SECRET: ${{ secrets.CRON_SECRET_KEY }}
         run: |
-          echo "Triggering cleanup at $API_URL/api/storage/cleanup/"
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/storage/cleanup/" \
+          if [ -z "$API_URL" ]; then
+            echo "::error::API_URL is not set. Please add DEVSCAFFOLD_API_URL to GitHub Secrets."
+            exit 1
+          fi
+          
+          # Masked log
+          MASKED_URL=$(echo "$API_URL" | sed 's/\(http.*\/\/\).*/\1***/')
+          echo "Triggering cleanup at $MASKED_URL/api/storage/cleanup/"
+          
+          RESPONSE=$(curl -s -w "\n%{http_code}" -f -X POST "$API_URL/api/storage/cleanup/" \
             -H "X-Cron-Secret: $CRON_SECRET" \
             -H "Content-Type: application/json")
           

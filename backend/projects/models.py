@@ -85,12 +85,16 @@ class Project(models.Model):
     def __str__(self):
         return f"{self.name or f'Project {self.id}'} - {self.user.email}"
     
-    def mark_completed(self):
+    def mark_completed(self, zip_path: str = None, repo_dir: str = None):
         """Mark project as completed and schedule deletion."""
         self.status = 'completed'
         self.completed_at = timezone.now()
         self.deletion_scheduled_at = timezone.now() + timedelta(hours=settings.REPO_RETENTION_HOURS)
         self.progress = 100
+        if zip_path:
+            self.zip_file_path = zip_path
+        if repo_dir:
+            self.repo_directory = repo_dir
         self.save()
     
     def mark_failed(self, error_message: str):
