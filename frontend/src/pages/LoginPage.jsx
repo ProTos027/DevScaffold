@@ -65,7 +65,7 @@ export default function AuthDrawer({ isOpen, onClose }) {
     };
 
     return (
-        <div className="fixed inset-y-0 right-0 w-full md:w-[400px] z-50 bg-[rgb(var(--bg-secondary))] !rounded-none !rounded-l-3xl border-l border-[rgb(var(--border-primary))] p-8 flex flex-col animate-slide-in-right shadow-2xl">
+        <div className="fixed inset-y-0 right-0 w-full md:w-[400px] z-[70] bg-[rgb(var(--bg-secondary))] !rounded-none !rounded-l-3xl border-l border-[rgb(var(--border-primary))] p-8 flex flex-col animate-slide-in-right shadow-2xl">
             {/* Close Button */}
             <button
                 onClick={onClose}

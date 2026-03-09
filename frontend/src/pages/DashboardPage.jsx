@@ -381,8 +381,8 @@ export default function DashboardPage() {
                     </form>
                 </div>
 
-                <div className="mt-12 text-center text-xs text-[rgb(var(--text-secondary))] uppercase tracking-[0.5em] opacity-30 select-none">
-                    Entropy Strictly Decreases
+                <div className="mt-12 text-center text-xs text-[rgb(var(--text-secondary))] uppercase tracking-[0.3em] opacity-30 select-none">
+                    100+ projects generated
                 </div>
             </main >
 

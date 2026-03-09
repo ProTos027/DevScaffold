@@ -11,18 +11,37 @@ DevScaffold is an advanced agentic coding platform that transforms natural langu
 - **Stack-Agnostic Generation**: Dynamically implements logic for Spring Boot, FastAPI, Django, Express, React, Vue, etc.
 - **Real-Time Progress Tracking**: Granular visibility into the agentic reasoning and file generation process.
 
-## 🏗️ Architecture (The Assembly Line)
+## 🖼️ Visual Product Tour (The 7-Step Journey)
 
-DevScaffold uses a multi-phased pipeline to minimize entropy and maximize code quality:
+DevScaffold uses a structured, multi-agent pipeline to transform intent into production-ready assets.
 
-1.  **Stage 1: Spec Builder**: Parses natural language into a structured `Intent Spec`.
-2.  **Stage 2: Prompt Expander**: Research-driven expansion of the domain to guide implementation details.
-3.  **Stage 3: Contract Builder**: Acts as the Architect, locking down file structures and API schemas.
-4.  **Stage 4: Generation Engine**: 
-    - **Backend**: Implements business logic and data persistence.
-    - **Frontend**: Implements the UI and API integration.
-    - **Infrastructure**: Generates READMEs, Dockerfiles, and environment configs.
-5.  **Stage 5: Assembler**: Validates, packages, and zips the final repository.
+### 1. Secure Identity
+Authenticate via **GitHub OAuth** or manual **Email/Password** to persist your project history and secrets in the cloud.
+![Step 1: Login](frontend/public/screenshots/step1_login.png)
+
+### 2. Fuel the Factory (Secret Vault)
+Securely register your **Google Gemini API Keys** in the Vault. Our engine uses multiple keys to orchestrate parallel agentic reasoning.
+![Step 2: Keys](frontend/public/screenshots/step2_keys.png)
+
+### 3. Define Vision
+Describe your application in natural language. From simple CRUD apps to complex enterprise systems, the prompt is your only limit.
+![Step 3: Prompt](frontend/public/screenshots/step3_prompt.png)
+
+### 4. Verify Blueprint (Intent Spec)
+Review the auto-generated **Intent Specification**. Refine the tech stack, database schema, and core features before the build begins.
+![Step 4: Spec](frontend/public/screenshots/step4_spec.png)
+
+### 5. Architecture Graph
+Visualize the logical dependency graph and component mapping derived from your specification.
+![Step 5: Graph](frontend/public/screenshots/step5_graph.png)
+
+### 6. Agentic Build
+Watch the multi-agent pipeline execute folder contracts, implement business logic, and generate the UI in real-time.
+![Step 6: Build](frontend/public/screenshots/step6_build.png)
+
+### 7. Own the Asset
+Download your production-ready, clean source code as a ZIP. Zero-entropy, deterministic output ready for deployment.
+![Step 7: Source](frontend/public/screenshots/step7_source.png)
 
 ## 🛠️ Tech Stack
 

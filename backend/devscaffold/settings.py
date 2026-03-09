@@ -205,18 +205,18 @@ SOCIALACCOUNT_ADAPTER = 'accounts.adapters.CustomSocialAccountAdapter'
 ACCOUNT_ADAPTER = 'accounts.adapters.AccountAdapter'
 LOGIN_REDIRECT_URL = config('FRONTEND_URL', default='http://localhost:5173') + '/dashboard'
 
-SOCIALACCOUNT_PROVIDERS = {
-    'github': {
-        'APP': {
-            'client_id': config('GITHUB_CLIENT_ID', default=''),
-            'secret': config('GITHUB_CLIENT_SECRET', default=''),
-        },
-        'SCOPE': [
-            'user',
-            'repo',
-        ],
-    }
-}
+# SOCIALACCOUNT_PROVIDERS = {
+#     'github': {
+#         'APP': {
+#             'client_id': config('GITHUB_CLIENT_ID', default=''),
+#             'secret': config('GITHUB_CLIENT_SECRET', default=''),
+#         },
+#         'SCOPE': [
+#             'user',
+#             'repo',
+#         ],
+#     }
+# }
 
 # Increase timeout for OAuth API requests to prevent connection errors
 SOCIALACCOUNT_REQUESTS_TIMEOUT = 30  # seconds

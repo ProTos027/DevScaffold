@@ -21,24 +21,28 @@ jobs:
             exit 1
           fi
           
-          # Masked log
-          MASKED_URL=$(echo "$API_URL" | sed 's/\(http.*\/\/\).*/\1***/')
+          # Normalize URL (strip trailing slash if present)
+          CLEAN_URL=$(echo "$API_URL" | sed 's:/*$::')
+          
+          # Masked log for security
+          MASKED_URL=$(echo "$CLEAN_URL" | sed 's/\(http.*\/\/\).*/\1***/')
           echo "Triggering cleanup at $MASKED_URL/api/storage/cleanup/"
           
-          RESPONSE=$(curl -s -w "\n%{http_code}" -f -X POST "$API_URL/api/storage/cleanup/" \
+          # Use curl to get body and status. Remove -f so we can capture the body on error.
+          # We use a temporary file to separate body and status.
+          CURL_OUT=$(curl -s -w "\n%{http_code}" -X POST "${CLEAN_URL}/api/storage/cleanup/" \
             -H "X-Cron-Secret: $CRON_SECRET" \
             -H "Content-Type: application/json")
           
-          # Extract the body and HTTP status code from curl output
-          HTTP_BODY=$(echo "$RESPONSE" | head -n -1)
-          HTTP_STATUS=$(echo "$RESPONSE" | tail -n 1)
+          HTTP_BODY=$(echo "$CURL_OUT" | head -n -1)
+          HTTP_STATUS=$(echo "$CURL_OUT" | tail -n 1)
           
           echo "Response Status: $HTTP_STATUS"
-          echo "Response Body: $HTTP_BODY"
+          echo "Response Content: $HTTP_BODY"
           
           if [ "$HTTP_STATUS" -ne 200 ]; then
-            echo "::error::Cleanup ping failed with status $HTTP_STATUS"
+            echo "::error::Cleanup ping failed with status $HTTP_STATUS. See logs above for response body."
             exit 1
           fi
           
-          echo "Cleanup ping successful!"
+          echo "Cleanup process completed successfully!"

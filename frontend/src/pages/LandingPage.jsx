@@ -7,46 +7,55 @@ export default function LandingPage() {
     const { isAuthenticated, user } = useAuth();
     const [isLoginOpen, setIsLoginOpen] = useState(false);
 
-    const pipelineStages = [
+    const tourSteps = [
         {
-            title: 'Intent Spec',
-            description: 'Translates your natural language idea into a structured technical specification.',
-            icon: (
-                <svg className="w-8 h-8 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                    <circle cx="12" cy="12" r="6" strokeWidth="2" />
-                    <circle cx="12" cy="12" r="2" strokeWidth="2" />
-                </svg>
-            )
+            number: '01',
+            title: 'Secure Identity',
+            description: 'Authenticate via GitHub or manual credentials to persist your project history and generated assets in the cloud.',
+            image: '/screenshots/step1_login.png',
+            tag: 'AUTH'
         },
         {
-            title: 'Component Plan',
-            description: 'Breaks down the spec into a logical architecture and dependency graph.',
-            icon: (
-                <svg className="w-8 h-8 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" strokeWidth="2" />
-                    <line x1="8" y1="2" x2="8" y2="18" strokeWidth="2" />
-                    <line x1="16" y1="6" x2="16" y2="22" strokeWidth="2" />
-                </svg>
-            )
+            number: '02',
+            title: 'Fuel the Factory',
+            description: 'Plug in your Gemini API keys securely in the Vault to power our agentic reasoning engine.',
+            image: '/screenshots/step2_keys.png',
+            tag: 'SETUP'
         },
         {
-            title: 'Folder Contract',
-            description: 'Creates a deterministic manifesto of every file and its responsibilities.',
-            icon: (
-                <svg className="w-8 h-8 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-            )
+            number: '03',
+            title: 'Define Vision',
+            description: 'Describe your idea in natural language. From simple Todo lists to complex enterprise systems.',
+            image: '/screenshots/step3_prompt.png',
+            tag: 'INTENT'
         },
         {
-            title: 'Code Generation',
-            description: 'Our agent writes clean, production-ready code following the contract.',
-            icon: (
-                <svg className="w-8 h-8 text-cosmic-cyan" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
-            )
+            number: '04',
+            title: 'Verify Blueprint',
+            description: 'Review the auto-generated Intent Spec. Refine the stack, database, and features before building.',
+            image: '/screenshots/step4_spec.png',
+            tag: 'VALIDATION'
+        },
+        {
+            number: '05',
+            title: 'Architecture Graph',
+            description: 'Visualize the logical dependency graph and component mapping derived from your spec.',
+            image: '/screenshots/step5_graph.png',
+            tag: 'LOGIC'
+        },
+        {
+            number: '06',
+            title: 'Agentic Build',
+            description: 'Watch the multi-agent pipeline execute folder contracts and implement source code in real-time.',
+            image: '/screenshots/step6_build.png',
+            tag: 'PIPELINE'
+        },
+        {
+            number: '07',
+            title: 'Own the Asset',
+            description: 'Download your production-ready, clean source code zip. Zero-entropy, deterministic output.',
+            image: '/screenshots/step7_source.png',
+            tag: 'RESULT'
         }
     ];
 
@@ -55,7 +64,7 @@ export default function LandingPage() {
             {/* Backdrop for Login Drawer */}
             {isLoginOpen && (
                 <div
-                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
+                    className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] transition-opacity duration-300"
                     onClick={() => setIsLoginOpen(false)}
                 />
             )}
@@ -114,23 +123,53 @@ export default function LandingPage() {
             </header>
             <div className="border-b border-[rgb(var(--color-brand-separator)/0.15)] max-w-7xl mx-auto" id="hero-separator" />
 
-            {/* Pipeline Section */}
-            <section className="py-20 px-6 max-w-7xl mx-auto">
-                <h2 className="text-section text-center mb-16">
-                    The 4-Stage Canonical Pipeline
+            {/* Product Tour Section */}
+            <section className="py-24 px-6 max-w-7xl mx-auto">
+                <h2 className="text-section text-center mb-4 uppercase tracking-widest text-gold-solid">
+                    The Product Tour
                 </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                    {pipelineStages.map((stage, index) => (
-                        <div key={index} className="glass-2 p-8 hover:scale-105 transition-transform duration-300 border border-[rgb(var(--border-primary))]">
-                            <div className="mb-6">{stage.icon}</div>
-                            <h3 className="text-subtitle mb-3 text-[rgb(var(--color-primary))]">{stage.title}</h3>
-                            <p className="text-body text-[rgb(var(--text-secondary))]">
-                                {stage.description}
-                            </p>
+                <p className="text-center text-[rgb(var(--text-secondary))] mb-20 max-w-2xl mx-auto">
+                    Experience the deterministic journey from natural language intent to clean, deployable source code.
+                </p>
+
+                <div className="space-y-32">
+                    {tourSteps.map((step, index) => (
+                        <div key={index} className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} items-center gap-12 lg:gap-16`}>
+                            {/* Text Content - Smaller weight */}
+                            <div className="flex-1 w-full lg:max-w-sm animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                                <div className="glass-2 p-8 lg:p-12 border border-[rgb(var(--color-primary)/0.15)] relative overflow-hidden group">
+                                    {/* Subtle hover glow */}
+                                    <div className="absolute inset-0 bg-gold-solid/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
+                                    <div className="relative z-10 space-y-6">
+                                        <div className="flex items-center gap-4">
+                                            <span className="text-4xl font-display font-bold opacity-10">{step.number}</span>
+                                            <span className="badge-gold">{step.tag}</span>
+                                        </div>
+                                        <h3 className="text-section text-gold-solid">{step.title}</h3>
+                                        <p className="text-lead text-[rgb(var(--text-secondary))] leading-relaxed">
+                                            {step.description}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Image Visual - Larger weight */}
+                            <div className="flex-[2] w-full">
+                                <div className="glass-2 p-2 relative group overflow-hidden border border-[rgb(var(--color-primary)/0.2)]">
+                                    <div className="absolute inset-0 bg-gold-solid/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10" />
+                                    <img
+                                        src={step.image}
+                                        alt={step.title}
+                                        className="w-full h-auto rounded-lg shadow-2xl transition-transform duration-700 group-hover:scale-[1.02]"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>
             </section>
+
             <div className="border-b border-[rgb(var(--color-brand-separator)/0.15)] max-w-5xl mx-auto" id="pipeline-separator" />
 
             {/* Value Prop */}
@@ -141,10 +180,10 @@ export default function LandingPage() {
                     </svg>
                 </div>
                 <div className="relative z-10">
-                    <h2 className="text-section mb-8 italic">Entropy Strictly Decreases</h2>
+                    <h2 className="text-section mb-8 italic">100+ projects generated</h2>
                     <p className="text-lead text-[rgb(var(--text-secondary))] max-w-3xl mx-auto">
-                        Unlike traditional LLM generation, DevScaffold uses a deterministic pipeline. Each stage validates the previous,
-                        ensuring that your project architecture is solid before a single line of code is written.
+                        DevScaffold has successfully transformed over 100 complex intents into production-ready architectures,
+                        maintaining a strictly deterministic pipeline that eliminates the "hallucination problem" of traditional LLMs.
                     </p>
                 </div>
             </section>
