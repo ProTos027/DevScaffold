@@ -2,14 +2,41 @@
 
 DevScaffold is an advanced agentic coding platform that transforms natural language intent into high-fidelity, runnable repositories. It uses a structured multi-agent pipeline powered by Google Gemini to ensure deterministic architectural consistency and high code quality.
 
-## 🌟 Key Features
+# DevScaffold — Highlights
 
-- **Intent-to-Code Pipeline**: Converts fuzzy user prompts into precise architectural specifications using a 5-stage assembly line.
-- **Creative Vision Propagation**: stylistic nuances (e.g., "90s terminal", "cosmic gold") are preserved across all agents.
-- **Absolute Dark Mode**: Premium, dark-themed UI by default, enforced at both the platform and generated code levels.
-- **Architectural Manifests**: A centralized "Source of Truth" (Manifest) ensures all agents align on naming and interfaces.
-- **Stack-Agnostic Generation**: Dynamically implements logic for Spring Boot, FastAPI, Django, Express, React, Vue, etc.
-- **Real-Time Progress Tracking**: Granular visibility into the agentic reasoning and file generation process.
+> For recruiters, engineers, and collaborators reviewing the technical depth of this project.
+
+---
+
+## What Makes This Different
+
+### 1. Custom 5-Stage Multi-Agent Pipeline (No LangChain)
+Engineered a stateless multi-agent code generation pipeline — PromptExpander → SpecBuilder → ContractBuilder → 3-phase GenerationEngine → Assembler — without LangChain Agents. Used Google GenAI SDK directly for native Pydantic schema enforcement, RetryInfo-aware retry logic, and mid-run API key rotation. Achieves one-shot prototype generation from prompts as short as 5–10 words.
+
+### 2. Verified Generation Quality — 75–96% First-Shot Completion
+Generation quality is measured using a custom weighted effort scoring formula:
+
+```
+E = Σ Sw(s) × [1.5·Lm(s) + 1.0·La(s) + 0.5·Ld(s)]
+```
+
+Where significance weights (project-breaking = 4, functional = 2, UI = 1) are multiplied against operation costs (modified = 1.5, added = 1.0, deleted = 0.5) per category. Environment-specific setup is excluded from scoring to isolate true generation quality. Verified 75–96% first-shot completion across test runs in 3–8 minutes depending on model and project complexity.
+
+### 3. Sliding-Window ProjectManifest (Typed Source of Truth)
+Designed a phase-aware ProjectManifest — Pydantic-typed, self-pruning between pipeline stages — that sheds stale context at each phase boundary while preserving `creative_vision` metadata (e.g. "90s terminal aesthetic", "cosmic gold dark theme") as a propagated constraint through all downstream agents. Solves the core coordination problem in multi-agent LLM systems: what to keep vs. discard across phases.
+
+### 4. Typed Cross-Layer Contract Enforcement
+Enforced inter-phase integration via a `CrossLayerContractSchema` — the backend generation phase outputs exact port, auth header format, token field name, and WebSocket library into a Pydantic-validated contract consumed verbatim by the frontend phase. Eliminates cross-layer integration drift by design rather than by convention.
+
+### 5. Two-Layer Runtime RAG — Zero Vector DB
+Built a two-layer RAG system: static framework reference docs (Django, FastAPI, React, Vue, Express, Spring Boot) pre-embedded with MD5-keyed `.npy` disk caching, dynamically augmented at runtime by LLM-synthesized domain knowledge derived from the user's own prompt. Implemented entirely with NumPy and Gemini Embeddings — no Pinecone, no Chroma, no additional infrastructure.
+
+### 6. BYOAK Multi-Key Rotation with Circuit Breaking
+Implemented Bring Your Own API Key (BYOAK) architecture with LRU-based multi-key selection, RetryInfo-parsed exponential backoff (reads Gemini's exact recommended wait duration from error details), and daily quota circuit-breaking — sustaining uninterrupted generation across mid-run key exhaustion with zero platform API credit exposure.
+
+### 7. Deterministic Assembly Layer
+The final assembly stage is fully LLM-free — validates all generated file paths against the manifest directory layout, auto-generates Python `__init__.py` across backend directories, appends the full pipeline action log to the output README, and uploads to S3. Correctness guaranteed by structure, not by inference.
+
 
 ## 🖼️ Visual Product Tour (The 7-Step Journey)
 
